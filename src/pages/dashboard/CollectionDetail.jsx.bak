@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // PENTING: Gunakan hook navigasi
-import { Database, Plus, Trash2, ArrowRight, Folder } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Database, Plus, Trash2, ArrowRight, Folder, RefreshCw } from 'lucide-react';
 import { DB } from '../../api/db';
 import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -11,7 +11,6 @@ export default function Collections() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newColName, setNewColName] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate(); // Hook Navigasi
 
   const fetchCollections = async () => {
     try {
@@ -23,7 +22,7 @@ export default function Collections() {
       }));
       setCollections(colsWithCounts);
     } catch (error) {
-      console.error("Error fetching collections:", error);
+      console.error(error);
     }
   };
 
@@ -47,8 +46,7 @@ export default function Collections() {
     }
   };
 
-  const handleDelete = async (e, name) => {
-    e.stopPropagation(); // PENTING: Agar saat klik hapus, tidak ikut membuka collection
+  const handleDelete = async (name) => {
     if (confirm(`Drop collection '${name}'? All data will be lost permanently.`)) {
       await DB.deleteCollection(name);
       fetchCollections();
@@ -67,23 +65,18 @@ export default function Collections() {
         </Button>
       </div>
 
-      {/* Grid Responsif */}
+      {/* Grid Responsif: 1 kolom di HP, 2 di Tablet, 3 di Desktop */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {collections.map((col) => (
-          <Card 
-            key={col.name} 
-            // Tambahkan onClick di Card Wrapper agar area klik luas
-            onClick={() => navigate(`/dashboard/collections/${col.name}`)}
-            className="group hover:border-sky-500/30 transition-all duration-300 bg-surface/30 cursor-pointer active:scale-[0.99]"
-          >
+          <Card key={col.name} className="group hover:border-sky-500/30 transition-all duration-300 bg-surface/30">
             <CardHeader className="flex flex-row items-start justify-between pb-2">
               <div className="p-2.5 bg-white/5 rounded-xl text-sky-400 group-hover:text-white group-hover:bg-sky-500 transition-colors">
                 <Folder size={20} />
               </div>
               {col.type !== 'system' && (
                 <button 
-                  onClick={(e) => handleDelete(e, col.name)}
-                  className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition z-10"
+                  onClick={() => handleDelete(col.name)}
+                  className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
                   title="Drop Collection"
                 >
                   <Trash2 size={16} />
@@ -100,17 +93,17 @@ export default function Collections() {
               </div>
             </CardContent>
             <CardFooter>
-              {/* Button visual saja, event klik ditangani oleh Card wrapper */}
-              <div className="w-full flex justify-between items-center px-4 py-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition text-sm text-gray-400 group-hover:text-white">
-                  Browse Data 
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-              </div>
+              <Link to={`/dashboard/collections/${col.name}`} className="w-full">
+                <Button variant="secondary" className="w-full justify-between group/btn bg-white/5 hover:bg-white/10 border-transparent">
+                  Browse Data <ArrowRight size={16} className="text-gray-500 group-hover/btn:translate-x-1 group-hover/btn:text-white transition-all" />
+                </Button>
+              </Link>
             </CardFooter>
           </Card>
         ))}
       </div>
 
-      {/* Modal Create Collection */}
+      {/* Modal Create Collection (Responsive) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
           <Card className="w-full sm:max-w-md bg-[#09090b] border-t sm:border border-white/10 rounded-t-2xl sm:rounded-xl shadow-2xl relative">

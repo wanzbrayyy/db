@@ -1,136 +1,149 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Database, Plus, Trash2, ArrowRight, Folder, RefreshCw } from 'lucide-react';
-import { DB } from '../../api/db';
-import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useDatabase } from '../../hooks/useDatabase';
+import { Trash2, Plus, Download, Upload, Filter, Copy, ChevronLeft } from 'lucide-react';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-export default function Collections() {
-  const [collections, setCollections] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newColName, setNewColName] = useState('');
-  const [loading, setLoading] = useState(false);
+const API_URL = 'https://dbw-nu.vercel.app/api/data';
 
-  const fetchCollections = async () => {
-    try {
-      const cols = await DB.getCollections();
-      // Fetch docs count parallel
-      const colsWithCounts = await Promise.all(cols.map(async (c) => {
-        const docs = await DB.find(c.name);
-        return { ...c, count: docs?.length || 0 };
-      }));
-      setCollections(colsWithCounts);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+export default function CollectionDetail() {
+  const { name } = useParams();
+  const { data, loading, create, remove, fetchAll } = useDatabase(name);
+  const [filter, setFilter] = useState('');
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // FIX: Safety check (data || []) agar tidak crash "filter of undefined"
+  const safeData = Array.isArray(data) ? data : [];
+  
+  const filteredData = safeData.filter(doc => 
+    JSON.stringify(doc).toLowerCase().includes(filter.toLowerCase())
+  );
 
   useEffect(() => {
-    fetchCollections();
-  }, []);
+    fetchAll();
+  }, [name]); // Refresh saat nama collection berubah
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (!newColName) return;
-    setLoading(true);
-    try {
-      await DB.createCollection(newColName.toLowerCase().replace(/\s/g, '_'));
-      setNewColName('');
-      setIsModalOpen(false);
-      fetchCollections();
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(safeData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}_export.json`;
+    a.click();
   };
 
-  const handleDelete = async (name) => {
-    if (confirm(`Drop collection '${name}'? All data will be lost permanently.`)) {
-      await DB.deleteCollection(name);
-      fetchCollections();
-    }
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        await fetch(`${API_URL}/${name}/import`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-auth-token': localStorage.getItem('token') },
+            body: JSON.stringify(json)
+        });
+        fetchAll();
+        alert('Import Successful!');
+      } catch (err) {
+        alert('Invalid JSON file');
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white">Collections</h1>
-          <p className="text-gray-400 text-sm mt-1">Manage your JSON document stores.</p>
+    <div className="h-[calc(100vh-8rem)] flex flex-col">
+      {/* Toolbar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 border-b border-white/10 pb-4">
+        <div className="flex items-center gap-3">
+           <Link to="/dashboard/collections" className="p-2 hover:bg-white/10 rounded-full transition text-gray-400 hover:text-white">
+             <ChevronLeft size={20} />
+           </Link>
+           <div>
+             <h1 className="text-2xl font-bold text-white flex items-center gap-2">{name}</h1>
+             <p className="text-xs text-gray-500 font-mono">{safeData.length} Documents</p>
+           </div>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} variant="primary" className="w-full sm:w-auto">
-          <Plus size={16} /> Create Collection
-        </Button>
+        
+        <div className="flex flex-wrap items-center gap-2">
+           <div className="relative grow md:grow-0">
+              <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input 
+                placeholder='Filter...' 
+                className="bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white w-full md:w-64 focus:outline-none focus:border-sky-500"
+                value={filter}
+                onChange={e => setFilter(e.target.value)}
+              />
+           </div>
+           
+           <div className="flex gap-2">
+             <Button size="sm" variant="secondary" onClick={() => fileInputRef.current.click()}>
+                <Upload size={14} /> <span className="hidden sm:inline">Import</span>
+             </Button>
+             <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleImport} />
+             
+             <Button size="sm" variant="secondary" onClick={handleExport}>
+                <Download size={14} /> <span className="hidden sm:inline">Export</span>
+             </Button>
+             <Button size="sm" onClick={() => create({ new_entry: true })}>
+                <Plus size={14} /> Insert
+             </Button>
+           </div>
+        </div>
       </div>
 
-      {/* Grid Responsif: 1 kolom di HP, 2 di Tablet, 3 di Desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {collections.map((col) => (
-          <Card key={col.name} className="group hover:border-sky-500/30 transition-all duration-300 bg-surface/30">
-            <CardHeader className="flex flex-row items-start justify-between pb-2">
-              <div className="p-2.5 bg-white/5 rounded-xl text-sky-400 group-hover:text-white group-hover:bg-sky-500 transition-colors">
-                <Folder size={20} />
-              </div>
-              {col.type !== 'system' && (
-                <button 
-                  onClick={() => handleDelete(col.name)}
-                  className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
-                  title="Drop Collection"
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
-            </CardHeader>
-            <CardContent>
-              <h3 className="text-lg font-bold text-white mb-1 truncate" title={col.name}>{col.name}</h3>
-              <div className="flex items-center gap-2 text-xs font-mono text-gray-400">
-                <span className="bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                  {col.count} Docs
-                </span>
-                {col.type === 'system' && <span className="text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded">System</span>}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Link to={`/dashboard/collections/${col.name}`} className="w-full">
-                <Button variant="secondary" className="w-full justify-between group/btn bg-white/5 hover:bg-white/10 border-transparent">
-                  Browse Data <ArrowRight size={16} className="text-gray-500 group-hover/btn:translate-x-1 group-hover/btn:text-white transition-all" />
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-
-      {/* Modal Create Collection (Responsive) */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-          <Card className="w-full sm:max-w-md bg-[#09090b] border-t sm:border border-white/10 rounded-t-2xl sm:rounded-xl shadow-2xl relative">
-            <CardHeader>
-              <CardTitle>New Collection</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreate} className="space-y-4">
-                <Input 
-                  label="Name" 
-                  placeholder="e.g. products, orders" 
-                  value={newColName}
-                  onChange={(e) => setNewColName(e.target.value)}
-                  autoFocus
-                />
-                <div className="text-xs text-gray-500 bg-white/5 p-3 rounded">
-                  * Name will be converted to snake_case.
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <Button type="button" variant="ghost" className="w-full" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                  <Button type="submit" variant="primary" className="w-full" isLoading={loading}>Create</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+      <div className="flex flex-1 gap-4 overflow-hidden">
+        {/* Document List */}
+        <div className={`flex-1 overflow-y-auto space-y-2 pr-2 ${selectedDoc ? 'hidden md:block' : ''}`}>
+           {loading ? (
+             <div className="text-center py-10 text-gray-500 animate-pulse">Fetching Data...</div>
+           ) : filteredData.length === 0 ? (
+             <div className="text-center py-10 text-gray-500 border border-dashed border-white/10 rounded">No data found</div>
+           ) : (
+             filteredData.map(doc => (
+               <div 
+                 key={doc._id} 
+                 onClick={() => setSelectedDoc(doc)}
+                 className={`p-3 rounded border cursor-pointer transition ${selectedDoc?._id === doc._id ? 'bg-sky-900/20 border-sky-500/50' : 'bg-[#0f0f11] border-white/5 hover:border-white/20'}`}
+               >
+                  <div className="flex justify-between items-start">
+                     <code className="text-xs text-sky-400 font-mono">ID: {doc._id?.substring(0, 18)}...</code>
+                     <button onClick={(e) => { e.stopPropagation(); remove(doc._id); }} className="text-gray-600 hover:text-red-400 p-1">
+                        <Trash2 size={14} />
+                     </button>
+                  </div>
+                  <div className="mt-2 text-xs text-gray-400 truncate font-mono">
+                     {JSON.stringify(doc).substring(0, 80)}...
+                  </div>
+               </div>
+             ))
+           )}
         </div>
-      )}
+
+        {/* JSON Pretty Viewer Panel (Responsive Overlay on Mobile) */}
+        {selectedDoc && (
+          <div className="fixed inset-0 z-50 md:static md:inset-auto md:w-1/2 bg-[#0d1117] md:border border-white/10 rounded-lg flex flex-col overflow-hidden">
+             <div className="p-3 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-400 uppercase">Document Viewer</span>
+                <div className="flex gap-2">
+                   <button className="p-1 hover:text-white text-gray-500" title="Copy ID" onClick={() => navigator.clipboard.writeText(selectedDoc._id)}><Copy size={14}/></button>
+                   <button className="p-1 hover:text-white text-gray-500" title="Close" onClick={() => setSelectedDoc(null)}>✕</button>
+                </div>
+             </div>
+             <div className="flex-1 overflow-auto custom-scrollbar p-2">
+               <SyntaxHighlighter language="json" style={vscDarkPlus} customStyle={{background: 'transparent', fontSize: '12px', margin: 0}}>
+                  {JSON.stringify(selectedDoc, null, 2)}
+               </SyntaxHighlighter>
+             </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
