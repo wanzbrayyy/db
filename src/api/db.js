@@ -3,8 +3,28 @@ import { generateNanoId } from '../utils/uuid';
 // 🔥 URL Backend Vercel Anda
 const API_URL = 'https://dbw-nu.vercel.app/api/data';
 
-// Helper delay (Opsional, untuk efek loading visual di UI)
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// Helper: Menangani respon API agar tidak crash saat menerima "Server error" (Text)
+const handleResponse = async (res) => {
+  const contentType = res.headers.get("content-type");
+  
+  // 1. Jika server membalas dengan JSON
+  if (contentType && contentType.includes("application/json")) {
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || data.message || data.msg || "API Request Failed");
+    }
+    return data;
+  } 
+  
+  // 2. Jika server membalas dengan Text (Misal: "Server error")
+  else {
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(text || `HTTP Error ${res.status}`);
+    }
+    return text; // Jarang terjadi untuk endpoint data, tapi aman.
+  }
+};
 
 export const DB = {
   // --- Collection Management ---
@@ -12,25 +32,24 @@ export const DB = {
   getCollections: async () => {
     try {
       const res = await fetch(`${API_URL}/collections`);
-      if (!res.ok) throw new Error("Failed to fetch collections");
       
-      const data = await res.json();
+      // Gunakan handler pintar kita
+      const data = await handleResponse(res);
       
-      // FIX: Validasi agar selalu mengembalikan array
-      // Jika backend error atau null, kembalikan array kosong agar UI tidak crash
+      // VALIDASI EKSTRA: Pastikan data adalah Array agar tidak error "map is not a function"
       if (!Array.isArray(data)) {
-        console.warn("API response is not an array:", data);
+        console.warn("Warning: API did not return an array for collections.", data);
         return []; 
       }
       return data;
     } catch (error) {
-      console.error("DB Error:", error);
-      return []; // Safety fallback
+      console.error("DB GetCollections Error:", error);
+      return []; // Return array kosong agar Dashboard tidak Blank putih
     }
   },
 
   createCollection: async (name) => {
-    // Validasi input
+    // Validasi input di awal
     if (!name) throw new Error("Collection name is required");
 
     const res = await fetch(`${API_URL}/collections`, {
@@ -39,14 +58,8 @@ export const DB = {
       body: JSON.stringify({ name })
     });
     
-    const data = await res.json();
-
-    if (!res.ok) {
-      // Menangkap pesan error spesifik dari backend
-      throw new Error(data.error || data.message || "Failed to create collection");
-    }
-    
-    return data;
+    // Ini yang memperbaiki error "Unexpected token S"
+    return await handleResponse(res);
   },
 
   deleteCollection: async (name) => {
@@ -55,8 +68,7 @@ export const DB = {
       headers: { 'Content-Type': 'application/json' }
     });
     
-    if (!res.ok) throw new Error("Failed to delete collection");
-    return true;
+    return await handleResponse(res);
   },
 
   // --- Document CRUD ---
@@ -64,11 +76,11 @@ export const DB = {
   find: async (collection) => {
     try {
       const res = await fetch(`${API_URL}/${collection}`);
-      if (!res.ok) {
-        if (res.status === 404) return []; // Jika collection belum ada
-        throw new Error("Failed to fetch documents");
-      }
-      const data = await res.json();
+      
+      // Cek status 404 (Collection belum dibuat) -> Return kosong
+      if (res.status === 404) return [];
+      
+      const data = await handleResponse(res);
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error(`Find Error in ${collection}:`, error);
@@ -76,12 +88,10 @@ export const DB = {
     }
   },
 
-  // Perbaikan: findOne sekarang menerima Object, bukan Function
   findOne: async (collection, predicate) => {
-    // Safety check untuk kode lama
     if (typeof predicate === 'function') {
-      console.error("Deprecated: DB.findOne now requires an Object (e.g., { email: '...' })");
-      throw new Error("Client Error: Invalid predicate format. Use object.");
+      console.error("Deprecated: DB.findOne requires Object predicate.");
+      throw new Error("Invalid predicate. Use object format: { key: value }");
     }
 
     const res = await fetch(`${API_URL}/${collection}/find-one`, {
@@ -90,19 +100,22 @@ export const DB = {
       body: JSON.stringify(predicate)
     });
 
-    if (!res.ok) return null; // Return null jika tidak ketemu
-    return await res.json();
+    // Handle null result gracefully
+    if (res.status === 404) return null;
+    
+    // Jika body kosong (null), jangan parse JSON
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
   },
 
   findById: async (collection, id) => {
     const res = await fetch(`${API_URL}/${collection}/${id}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data || null;
+    if (res.status === 404) return null;
+    return await handleResponse(res);
   },
 
   insert: async (collection, data) => {
-    // Generate ID 50 Digit di Frontend
+    // Generate ID 50 Digit di Frontend agar UI konsisten
     const newItem = {
       _id: generateNanoId(50), 
       createdAt: new Date().toISOString(),
@@ -116,11 +129,7 @@ export const DB = {
       body: JSON.stringify(newItem)
     });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Failed to insert document");
-    }
-    return await res.json();
+    return await handleResponse(res);
   },
 
   update: async (collection, id, updates) => {
@@ -130,8 +139,7 @@ export const DB = {
       body: JSON.stringify(updates)
     });
 
-    if (!res.ok) throw new Error("Failed to update document");
-    return await res.json();
+    return await handleResponse(res);
   },
 
   remove: async (collection, id) => {
@@ -139,7 +147,6 @@ export const DB = {
       method: 'DELETE' 
     });
 
-    if (!res.ok) throw new Error("Failed to delete document");
-    return true;
+    return await handleResponse(res);
   }
 };
