@@ -6,13 +6,13 @@
 
 @layer base {
   body {
-    /* Menggunakan variabel warna custom tadi */
+    /* MENGGUNAKAN VARIABEL BARU */
     @apply bg-background text-textMain font-sans antialiased selection:bg-primary-glow selection:text-white;
-    
-    /* Overlay Noise Texture agar terlihat seperti film/organic */
     position: relative;
+    overflow-x: hidden; /* Mencegah scroll horizontal */
   }
 
+  /* Efek Noise Film Grain */
   body::before {
     content: "";
     position: fixed;
@@ -21,36 +21,32 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 9999;
-    @apply bg-noise; /* Texture kasar halus */
+    z-index: 50;
+    @apply bg-noise;
   }
 
-  /* Scrollbar Minimalis (Wajib untuk kesan Premium) */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
   }
-  
   ::-webkit-scrollbar-track {
     @apply bg-background;
   }
-  
   ::-webkit-scrollbar-thumb {
-    @apply bg-borderLight rounded-full hover:bg-textDim transition;
+    @apply bg-surfaceLight rounded-full hover:bg-borderHighlight transition;
   }
 }
 
-/* Glassmorphism Utilities */
+/* Class Keren untuk Glassmorphism */
 @layer components {
-  .glass-panel {
-    @apply bg-surface/60 backdrop-blur-md border border-border/50 shadow-glass;
-  }
-  
   .glass-card {
-    @apply bg-surface/40 backdrop-blur-sm border border-border hover:border-primary-glow/50 transition-all duration-300;
+    @apply bg-surface/40 backdrop-blur-md border border-white/10 shadow-2xl;
   }
   
-  .btn-primary {
-    @apply bg-white text-black hover:bg-gray-200 font-medium px-4 py-2 rounded-lg transition shadow-[0_0_15px_rgba(255,255,255,0.3)];
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-gray-400;
+  }
+  
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-glow to-indigo-400;
   }
 }

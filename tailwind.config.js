@@ -4,56 +4,59 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class', // Pastikan ini ada
   theme: {
     extend: {
-      // Font "Human-chosen" pairing
       fontFamily: {
-        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'], // Font coding yg lebih estetik
+        sans: ['"Inter"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
       colors: {
-        // Base Backgrounds (Zinc - Lebih "Matte" daripada Slate)
-        background: '#09090b', // Zinc 950 (Hampir hitam total)
-        surface: '#18181b',    // Zinc 900 (Untuk Card)
-        surfaceHighlight: '#27272a', // Zinc 800 (Hover state)
+        // --- PALET WARNA BARU (OBSIDIAN THEME) ---
+        // Hitam pekat, bukan biru tua (Slate)
+        background: '#09090b', // Zinc 950
+        surface: '#18181b',    // Zinc 900
+        surfaceLight: '#27272a', // Zinc 800
         
-        // Borders (Sangat halus)
+        // Border sangat tipis & elegan
         border: '#27272a',     // Zinc 800
-        borderLight: '#3f3f46', // Zinc 700
+        borderHighlight: '#3f3f46', // Zinc 700
         
-        // Typography (Kontras tinggi)
-        textMain: '#fafafa',   // Zinc 50 (Putih tapi tidak menyilaukan)
-        textMuted: '#a1a1aa',  // Zinc 400 (Abu-abu elegan)
-        textDim: '#52525b',    // Zinc 600 (Untuk teks sangat tidak penting)
-
-        // BRANDING: "Wanz Electric" (Bukan warna default Tailwind)
+        // Typography
+        textMain: '#fafafa',   // Putih bersih
+        textMuted: '#a1a1aa',  // Abu-abu smooth
+        
+        // BRAND COLOR: "Electric Violet" (Bukan Indigo standar)
         primary: {
-          DEFAULT: '#6366f1', // Indigo standar (fallback)
-          glow: '#8b5cf6',    // Violet glow
-          acid: '#d8b4fe',    // Purple pastel untuk highlight text
-        },
-        
-        // Functional Colors (Desaturated - tidak norak)
-        success: '#22c55e', // Green 500
-        danger: '#ef4444',  // Red 500
-        warning: '#f59e0b', // Amber 500
+          DEFAULT: '#7c3aed', // Violet 600
+          glow: '#8b5cf6',    // Violet 500
+          dark: '#5b21b6',    // Violet 800
+        }
       },
       backgroundImage: {
-        // ✨ RAHASIA AGAR TIDAK TERLIHAT AI: TEXTURE NOISE ✨
-        // Ini memberikan efek "film grain" halus
-        'noise': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E\")",
-        
-        // Gradient Wanzdb
-        'wanz-gradient': 'linear-gradient(to right, #4f46e5, #9333ea)', 
-        'grid-pattern': "linear-gradient(to right, #27272a 1px, transparent 1px), linear-gradient(to bottom, #27272a 1px, transparent 1px)",
+        'noise': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E\")",
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       },
-      backgroundSize: {
-        'grid': '40px 40px', // Ukuran kotak-kotak background
+      animation: {
+        'blob': 'blob 7s infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
-      boxShadow: {
-        'glow': '0 0 20px -5px rgba(139, 92, 246, 0.3)', // Violet glow
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+      keyframes: {
+        blob: {
+          '0%': { transform: 'translate(0px, 0px) scale(1)' },
+          '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+          '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+          '100%': { transform: 'translate(0px, 0px) scale(1)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
       }
     },
   },
