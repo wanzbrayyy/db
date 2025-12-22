@@ -1,42 +1,43 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { AuthService } from '../../api/auth';
+import { AuthService } from '../../api/auth'; // Import Service
 import Card, { CardHeader, CardContent, CardTitle } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { Smartphone, Globe, Upload, CheckCircle } from 'lucide-react';
+import Input from '../../components/ui/Input'; // Pastikan ada Input UI
+import { Shield, Smartphone, Globe, Upload, CheckCircle, XCircle, QrCode } from 'lucide-react';
 
 export default function Profile() {
   const { user } = useAuth();
   const [avatar, setAvatar] = useState(user?.avatar || '');
   
-  // State 2FA
+  // State untuk 2FA
   const [is2FAEnabled, setIs2FAEnabled] = useState(user?.isTwoFactorEnabled || false);
   const [qrCodeUrl, setQrCodeUrl] = useState(null);
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
-  // Handle Avatar
+  // Handle Avatar Upload
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if(file) {
        const reader = new FileReader();
        reader.onloadend = async () => {
           setAvatar(reader.result);
-          // Auto Save
+          // Update ke backend
           await AuthService.updateProfile({ avatar: reader.result });
        };
        reader.readAsDataURL(file);
     }
   };
 
-  // 1. Generate QR
+  // 1. Generate QR Code
   const handleEnable2FA = async () => {
     setLoading(true);
     setMsg('');
     try {
         const data = await AuthService.generate2FA();
-        setQrCodeUrl(data.qrCode);
+        setQrCodeUrl(data.qrCode); // Tampilkan QR Image
     } catch (err) {
         setMsg('Error: ' + err.message);
     } finally {
@@ -51,10 +52,11 @@ export default function Profile() {
     try {
         await AuthService.verify2FA(otpCode);
         setIs2FAEnabled(true);
-        setQrCodeUrl(null);
+        setQrCodeUrl(null); // Tutup QR scanner
         setMsg('Success: 2FA is now enabled!');
+        // Update user state di localstorage manual atau re-fetch (opsional)
     } catch (err) {
-        setMsg('Error: Invalid Code.');
+        setMsg('Error: Invalid Code. Try again.');
     } finally {
         setLoading(false);
     }
@@ -73,7 +75,7 @@ export default function Profile() {
                   <img 
                     src={avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} 
                     className="w-24 h-24 rounded-full border-2 border-white/10 object-cover" 
-                    alt="Avatar"
+                    alt="User Avatar"
                   />
                   <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition">
                      <Upload size={20} className="text-white" />
@@ -84,13 +86,13 @@ export default function Profile() {
                   <h3 className="text-xl font-bold text-white">{user?.name}</h3>
                   <p className="text-gray-400">{user?.email}</p>
                   <span className="inline-block px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 text-xs border border-sky-500/20 mt-2 font-mono">
-                    UID: {user?._id?.substring(0, 8)}...
+                    ID: {user?._id?.substring(0, 8)}...
                   </span>
                </div>
             </CardContent>
          </Card>
 
-         {/* 2FA Card */}
+         {/* 2FA Card (Logic Implementation) */}
          <Card className="bg-surface/30 border-white/5">
             <CardHeader><CardTitle>Two-Factor Auth</CardTitle></CardHeader>
             <CardContent>
@@ -104,30 +106,51 @@ export default function Profile() {
                   </div>
                </div>
 
-               {msg && <div className="text-xs p-2 mb-3 rounded border bg-white/5 border-white/10 text-white">{msg}</div>}
-
-               {!is2FAEnabled && !qrCodeUrl && (
-                   <Button onClick={handleEnable2FA} className="w-full" variant="secondary" isLoading={loading}>Setup 2FA</Button>
-               )}
-
-               {qrCodeUrl && (
-                   <div className="space-y-3 animate-in fade-in zoom-in-95">
-                       <div className="bg-white p-2 rounded-lg mx-auto w-fit">
-                           <img src={qrCodeUrl} alt="QR Code" className="w-32 h-32" />
-                       </div>
-                       <input 
-                         placeholder="123456" 
-                         className="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-center text-white outline-none focus:border-sky-500 font-mono"
-                         maxLength={6}
-                         value={otpCode}
-                         onChange={(e) => setOtpCode(e.target.value)}
-                       />
-                       <Button onClick={handleVerify2FA} className="w-full" variant="primary" isLoading={loading}>Verify</Button>
-                       <button onClick={() => setQrCodeUrl(null)} className="text-xs text-gray-500 w-full text-center mt-2">Cancel</button>
+               {/* Feedback Message */}
+               {msg && (
+                   <div className={`text-xs p-2 mb-3 rounded border ${msg.includes('Success') ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                       {msg}
                    </div>
                )}
 
-               {is2FAEnabled && <Button className="w-full opacity-50" variant="secondary" disabled>2FA Active</Button>}
+               {/* Logic Tampilan */}
+               {!is2FAEnabled && !qrCodeUrl && (
+                   <Button onClick={handleEnable2FA} className="w-full" variant="secondary" isLoading={loading}>
+                      Setup Google Auth
+                   </Button>
+               )}
+
+               {/* QR Code Scanner Area */}
+               {qrCodeUrl && (
+                   <div className="space-y-3 animate-in fade-in zoom-in-95">
+                       <div className="bg-white p-2 rounded-lg mx-auto w-fit">
+                           <img src={qrCodeUrl} alt="2FA QR Code" className="w-32 h-32" />
+                       </div>
+                       <p className="text-[10px] text-center text-gray-400">Scan with Google Authenticator</p>
+                       
+                       <div className="flex gap-2">
+                           <input 
+                             placeholder="123456" 
+                             className="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-center tracking-widest text-white outline-none focus:border-sky-500 font-mono"
+                             maxLength={6}
+                             value={otpCode}
+                             onChange={(e) => setOtpCode(e.target.value)}
+                           />
+                       </div>
+                       <Button onClick={handleVerify2FA} className="w-full" variant="primary" isLoading={loading}>
+                           Verify & Enable
+                       </Button>
+                       <button onClick={() => setQrCodeUrl(null)} className="text-xs text-gray-500 hover:text-white w-full text-center mt-2">
+                           Cancel
+                       </button>
+                   </div>
+               )}
+
+               {is2FAEnabled && (
+                   <Button className="w-full opacity-50 cursor-not-allowed" variant="secondary" disabled>
+                      2FA is Active
+                   </Button>
+               )}
             </CardContent>
          </Card>
       </div>
@@ -141,18 +164,19 @@ export default function Profile() {
                   <tr><th className="py-2">Device</th><th>IP Address</th><th>Time</th></tr>
                </thead>
                <tbody className="text-gray-300">
-                  {/* FIX: Gunakan array kosong jika undefined agar tidak crash */}
-                  {(user?.loginHistory || []).slice().reverse().slice(0, 3).map((log, i) => (
+                  {/* Mapping history dari user data jika ada */}
+                  {user?.loginHistory?.slice().reverse().slice(0, 3).map((log, i) => (
                       <tr key={i} className="border-b border-white/5">
                         <td className="py-3 flex items-center gap-2"><Globe size={14}/> {log.device ? 'Browser' : 'Unknown'}</td>
                         <td className="font-mono text-xs">{log.ip || '127.0.0.1'}</td>
-                        <td className="text-gray-500 text-xs">
-                            {log.timestamp ? new Date(log.timestamp).toLocaleString() : 'Just now'}
-                        </td>
+                        <td className="text-gray-500 text-xs">{new Date(log.timestamp).toLocaleString()}</td>
                       </tr>
-                  ))}
-                  {(!user?.loginHistory || user.loginHistory.length === 0) && (
-                      <tr><td colSpan="3" className="p-4 text-center text-textMuted text-xs">No history available</td></tr>
+                  )) || (
+                      <tr className="border-b border-white/5">
+                         <td className="py-3 flex items-center gap-2"><Globe size={14}/> Chrome on Windows</td>
+                         <td>Current Session</td>
+                         <td className="text-green-400">Active Now</td>
+                      </tr>
                   )}
                </tbody>
             </table>

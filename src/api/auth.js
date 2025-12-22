@@ -1,6 +1,6 @@
 import { generateNanoId } from '../utils/uuid'; // Pastikan path ini benar
 
-// URL Backend Vercel Anda
+// URL Backend Vercel
 const API_URL = 'https://dbw-nu.vercel.app/api/auth';
 
 const getHeaders = () => ({
@@ -9,25 +9,23 @@ const getHeaders = () => ({
 });
 
 export const AuthService = {
-  // --- AUTHENTICATION ---
-
+  
+  // REGISTER (Fix: Generate ID di frontend)
   register: async ({ name, email, password }) => {
-    // FIX: Generate ID 50 Digit di sini agar Backend tidak menolak
-    const _id = generateNanoId(50);
+    const _id = generateNanoId(50); // ID 50 Digit
     const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
     
     try {
       const res = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Kirim _id di body
         body: JSON.stringify({ _id, name, email, password, avatar })
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.msg || data.error || 'Registration failed');
 
-      // Simpan Token & User
+      // Auto Login
       localStorage.setItem('token', data.token);
       localStorage.setItem('session_user', JSON.stringify(data.user));
       
@@ -37,6 +35,7 @@ export const AuthService = {
     }
   },
 
+  // LOGIN (Fix: Check 2FA Requirement)
   login: async ({ email, password }) => {
     try {
       const res = await fetch(`${API_URL}/login`, {
@@ -46,20 +45,21 @@ export const AuthService = {
       });
 
       const data = await res.json();
-      
-      if (!res.ok) {
-        if (typeof data !== 'object') throw new Error("Server Error");
-        throw new Error(data.msg || data.error || 'Login failed');
+      if (!res.ok) throw new Error(data.msg || 'Login failed');
+
+      // Jika butuh 2FA
+      if (data.require2FA) {
+          localStorage.setItem('temp_2fa_token', data.tempToken);
+          return { require2FA: true };
       }
 
+      // Login Normal
       localStorage.setItem('token', data.token);
       localStorage.setItem('session_user', JSON.stringify(data.user));
 
-      return data.user;
+      return { require2FA: false, user: data.user };
     } catch (err) {
-      if (err.message === 'Failed to fetch') {
-        throw new Error("Cannot connect to server. Check your internet.");
-      }
+      if (err.message === 'Failed to fetch') throw new Error("Connection Error");
       throw err;
     }
   },
@@ -70,20 +70,15 @@ export const AuthService = {
     window.location.href = '/login';
   },
 
-  // --- 2FA FEATURES (BARU) ---
+  // --- 2FA ENDPOINTS ---
 
-  // 1. Generate QR Code
   generate2FA: async () => {
-    const res = await fetch(`${API_URL}/2fa/generate`, {
-      method: 'POST',
-      headers: getHeaders()
-    });
+    const res = await fetch(`${API_URL}/2fa/generate`, { method: 'POST', headers: getHeaders() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.msg || "Failed to generate 2FA");
-    return data; // { secret, qrCode }
+    if (!res.ok) throw new Error(data.msg || "Failed");
+    return data; 
   },
 
-  // 2. Verify OTP & Enable
   verify2FA: async (token) => {
     const res = await fetch(`${API_URL}/2fa/verify`, {
       method: 'POST',
@@ -91,11 +86,29 @@ export const AuthService = {
       body: JSON.stringify({ token })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.msg || "Invalid OTP Code");
+    if (!res.ok) throw new Error(data.msg);
     return data;
   },
 
-  // --- UTILS ---
+  // VALIDATE LOGIN WITH OTP
+  validateLogin2FA: async (tempToken, otp) => {
+    const res = await fetch(`${API_URL}/2fa/validate-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken, otp })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.msg || "Invalid Code");
+
+    // Success -> Set Real Token
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('session_user', JSON.stringify(data.user));
+    localStorage.removeItem('temp_2fa_token');
+
+    return data;
+  },
+
+  // --- PROFILE ---
   
   updateProfile: async (updates) => {
     const res = await fetch(`${API_URL}/profile`, {
@@ -104,9 +117,7 @@ export const AuthService = {
       body: JSON.stringify(updates)
     });
     const data = await res.json();
-    if (res.ok) {
-        localStorage.setItem('session_user', JSON.stringify(data));
-    }
+    if (res.ok) localStorage.setItem('session_user', JSON.stringify(data));
     return data;
   },
 
@@ -115,7 +126,5 @@ export const AuthService = {
     return userStr ? JSON.parse(userStr) : null;
   },
 
-  getToken: () => {
-    return localStorage.getItem('token');
-  }
+  getToken: () => localStorage.getItem('token')
 };

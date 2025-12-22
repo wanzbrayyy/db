@@ -7,50 +7,45 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Cek sesi saat aplikasi dimuat pertama kali
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const currentUser = AuthService.getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-        }
-      } catch (error) {
-        console.error("Session restoration failed", error);
-      } finally {
-        setLoading(false);
-      }
+    const initAuth = () => {
+      const currentUser = AuthService.getCurrentUser();
+      setUser(currentUser);
+      setLoading(false);
     };
     initAuth();
   }, []);
 
-  // Wrapper untuk Login
   const login = async (credentials) => {
-    const userData = await AuthService.login(credentials);
+    const result = await AuthService.login(credentials);
+    // Jika login butuh 2FA, jangan set user dulu
+    if (!result.require2FA) {
+        setUser(result.user);
+    }
+    return result;
+  };
+
+  // Fungsi baru untuk dipanggil setelah sukses verify 2FA
+  const setSession = (userData) => {
+      setUser(userData);
+  };
+
+  const register = async (data) => {
+    const userData = await AuthService.register(data);
     setUser(userData);
     return userData;
   };
 
-  // Wrapper untuk Register
-  const register = async (data) => {
-    const userData = await AuthService.register(data);
-    // Opsional: Langsung login setelah register? 
-    // Di sini kita biarkan user login manual, atau set user agar langsung masuk dashboard
-    return userData;
-  };
-
-  // Wrapper untuk Logout
   const logout = () => {
     AuthService.logout();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, setSession }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom Hook agar lebih mudah dipanggil: const { user } = useAuth();
 export const useAuth = () => useContext(AuthContext);

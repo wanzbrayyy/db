@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider } from './context/ThemeContext'; // Context Baru
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -10,20 +10,19 @@ import AppLayout from './layouts/AppLayout';
 
 // Public Pages
 import Landing from './pages/Landing';
-import Docs from './pages/Docs'; 
+import Docs from './pages/Docs'; // Halaman Dokumentasi
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
-import Verify2FA from './pages/auth/Verify2FA'; // Halaman 2FA
 import NotFound from './pages/NotFound';
 
 // Dashboard Pages
 import Overview from './pages/dashboard/Overview';
-import Profile from './pages/dashboard/Profile';
+import Profile from './pages/dashboard/Profile'; // Halaman Profile (Avatar/2FA)
 import Collections from './pages/dashboard/Collections';
 import CollectionDetail from './pages/dashboard/CollectionDetail';
 import Playground from './pages/dashboard/Playground';
-import Developer from './pages/dashboard/Developer';
-import Trash from './pages/dashboard/Trash';
+import Developer from './pages/dashboard/Developer'; // Halaman Developer (API Keys)
+import Trash from './pages/dashboard/Trash'; // Halaman Trash Bin
 
 function App() {
   return (
@@ -36,28 +35,33 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/docs" element={<Docs />} />
               
-              {/* Auth */}
+              {/* Auth Routes with Dynamic Session ID */}
               <Route path="/login/:sessionId" element={<Login />} />
               <Route path="/login" element={<Navigate to={`/login/auth-${Date.now()}`} replace />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/verify-2fa" element={<Verify2FA />} /> {/* Route 2FA */}
             </Route>
 
             {/* Protected Dashboard Routes */}
             <Route path="/dashboard" element={<AppLayout />}>
               <Route index element={<Overview />} />
               <Route path="profile" element={<Profile />} />
+              
+              {/* Data Management */}
               <Route path="collections" element={<Collections />} />
               <Route path="collections/:name" element={<CollectionDetail />} />
-              <Route path="trash" element={<Trash />} /> 
+              <Route path="trash" element={<Trash />} /> {/* Route Trash Bin */}
+              
+              {/* Developer Tools */}
               <Route path="developer" element={<Developer />} />
               <Route path="playground" element={<Playground />} />
             </Route>
 
+            {/* 404 Page (Mini Game) */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
         
+        {/* Vercel Monitoring */}
         <Analytics />
         <SpeedInsights />
       </AuthProvider>
