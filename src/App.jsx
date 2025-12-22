@@ -9,6 +9,7 @@ import AppLayout from './layouts/AppLayout';
 
 // Pages
 import Landing from './pages/Landing';
+import Docs from './pages/Docs'; // Halaman Baru
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import NotFound from './pages/NotFound';
@@ -18,7 +19,7 @@ import Overview from './pages/dashboard/Overview';
 import Profile from './pages/dashboard/Profile';
 import Collections from './pages/dashboard/Collections';
 import CollectionDetail from './pages/dashboard/CollectionDetail';
-import Playground from './pages/dashboard/Playground'; // Halaman Baru
+import Playground from './pages/dashboard/Playground';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           {/* Public Routes */}
           <Route element={<MainLayout />}>
             <Route path="/" element={<Landing />} />
+            <Route path="/docs" element={<Docs />} /> {/* Route Docs */}
             <Route path="/login/:sessionId" element={<Login />} />
             <Route path="/login" element={<Navigate to={`/login/auth-${Date.now()}`} replace />} />
             <Route path="/register" element={<Register />} />
@@ -46,7 +48,6 @@ function App() {
         </Routes>
       </Router>
       
-      {/* Vercel Monitoring Tools */}
       <Analytics />
       <SpeedInsights />
     </AuthProvider>
