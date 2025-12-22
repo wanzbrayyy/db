@@ -5,18 +5,17 @@ export default function Button({
   children, variant = 'primary', size = 'md', isLoading, className, ...props 
 }) {
   const variants = {
-    // Tombol Utama: Putih solid di tema gelap (Standar Modern)
-    primary: "bg-white text-black hover:bg-gray-200 border-transparent shadow-[0_0_15px_rgba(255,255,255,0.2)]",
+    // Primary: Putih Solid (Sangat kontras di background hitam)
+    primary: "bg-white text-black hover:bg-gray-200 border-transparent shadow-[0_0_20px_rgba(255,255,255,0.15)]",
     
-    // Tombol Brand: Ungu Neon
-    brand: "bg-primary text-white hover:bg-primary-glow shadow-[0_0_20px_rgba(124,58,237,0.4)] border-transparent",
+    // Brand: Sekarang pakai Sky Blue atau Putih, bukan Ungu. 
+    // Kita samakan dengan primary agar "clean".
+    brand: "bg-white text-black hover:bg-gray-200 border-transparent shadow-lg",
     
-    // Tombol Secondary: Outline tipis
+    // Secondary: Outline
     secondary: "bg-transparent text-white border border-white/20 hover:bg-white/10 hover:border-white/40",
     
-    // Tombol Danger
     danger: "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20",
-    
     ghost: "bg-transparent hover:bg-white/5 text-textMuted hover:text-white"
   };
 

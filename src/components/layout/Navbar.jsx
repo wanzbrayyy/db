@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Database, Zap, Menu, X, Cpu } from 'lucide-react';
+import { Zap, Menu, X, Cpu } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../ui/Button';
 import { generateNanoId } from '../../utils/uuid';
@@ -10,7 +10,6 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Efek transparan saat di atas, solid saat discroll
   window.addEventListener('scroll', () => {
     setScrolled(window.scrollY > 20);
   });
@@ -31,8 +30,9 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-12">
           
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="bg-primary/20 p-1.5 rounded-lg border border-primary/20 group-hover:border-primary/50 transition">
-              <Cpu className="w-5 h-5 text-primary-glow" />
+            {/* Logo sekarang Monochrome/Cyan, bukan Ungu */}
+            <div className="bg-white/10 p-1.5 rounded-lg border border-white/10 group-hover:border-sky-500/50 transition">
+              <Cpu className="w-5 h-5 text-sky-400" />
             </div>
             <span className="text-xl font-bold font-mono tracking-tighter text-white">
               wanzdb
