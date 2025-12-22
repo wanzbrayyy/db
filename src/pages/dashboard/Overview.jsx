@@ -4,7 +4,7 @@ import { DB } from '../../api/db';
 import { useAuth } from '../../context/AuthContext';
 import Card, { CardContent, CardTitle, CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import ConnectModal from '../../components/dashboard/ConnectModal'; // Pastikan path ini benar
+import ConnectModal from '../../components/dashboard/ConnectModal'; 
 
 export default function Overview() {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ export default function Overview() {
     collections: 0, 
     docs: 0, 
     storage: '0 KB',
-    status: 'Connecting...'
+    status: 'Checking...'
   });
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -23,20 +23,28 @@ export default function Overview() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        // 1. Ambil daftar collection
+        
+        // 1. Ambil daftar collection (Sekarang aman, return [] jika error)
         const cols = await DB.getCollections();
         
-        // 2. Hitung total dokumen (Parallel Fetching)
+        // 2. Hitung total dokumen (Parallel Fetching agar cepat)
         let totalDocs = 0;
-        if (cols.length > 0) {
-          const docCounts = await Promise.all(
-            cols.map(c => DB.find(c.name).catch(() => []))
+        
+        if (cols && cols.length > 0) {
+          // Promise.allSettled lebih aman daripada Promise.all 
+          // (satu error tidak membatalkan semua)
+          const results = await Promise.allSettled(
+            cols.map(c => DB.find(c.name))
           );
-          totalDocs = docCounts.reduce((acc, curr) => acc + (curr?.length || 0), 0);
+          
+          results.forEach(result => {
+            if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+              totalDocs += result.value.length;
+            }
+          });
         }
 
-        // 3. Simulasi Storage (karena backend belum kirim size asli)
-        // Asumsi rata-rata 0.8 KB per dokumen
+        // 3. Simulasi Storage 
         const storageSizeVal = (totalDocs * 0.8);
         const storageDisplay = storageSizeVal > 1024 
           ? `${(storageSizeVal / 1024).toFixed(2)} MB`
@@ -69,7 +77,7 @@ export default function Overview() {
           </h1>
           <p className="text-textMuted mt-1 flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${stats.status === 'Healthy' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
-            System Status: <span className="text-white">{stats.status}</span>
+            System Status: <span className={stats.status === 'Healthy' ? "text-emerald-400" : "text-red-400"}>{stats.status}</span>
           </p>
         </div>
         
