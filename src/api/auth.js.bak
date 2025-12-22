@@ -49,4 +49,4 @@ export const AuthService = {
     const session = localStorage.getItem('session_user');
     return session ? JSON.parse(session) : null;
   }
-};
+};-
