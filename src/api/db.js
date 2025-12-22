@@ -1,58 +1,87 @@
 import { generateNanoId } from '../utils/uuid';
 
+// 🔥 URL Backend Vercel Anda
 const API_URL = 'https://dbw-nu.vercel.app/api/data';
 
-// Helper delay (Optional, hanya untuk efek visual loading di UI)
+// Helper delay (Opsional, untuk efek loading visual di UI)
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const DB = {
   // --- Collection Management ---
-  
+
   getCollections: async () => {
-    // await delay(200); // Uncomment jika ingin efek loading buatan
-    const res = await fetch(`${API_URL}/collections`);
-    return await res.json();
+    try {
+      const res = await fetch(`${API_URL}/collections`);
+      if (!res.ok) throw new Error("Failed to fetch collections");
+      
+      const data = await res.json();
+      
+      // FIX: Validasi agar selalu mengembalikan array
+      // Jika backend error atau null, kembalikan array kosong agar UI tidak crash
+      if (!Array.isArray(data)) {
+        console.warn("API response is not an array:", data);
+        return []; 
+      }
+      return data;
+    } catch (error) {
+      console.error("DB Error:", error);
+      return []; // Safety fallback
+    }
   },
 
   createCollection: async (name) => {
-    // await delay(300);
+    // Validasi input
+    if (!name) throw new Error("Collection name is required");
+
     const res = await fetch(`${API_URL}/collections`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name })
     });
     
+    const data = await res.json();
+
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Failed to create");
+      // Menangkap pesan error spesifik dari backend
+      throw new Error(data.error || data.message || "Failed to create collection");
     }
-    return await res.json();
+    
+    return data;
   },
 
   deleteCollection: async (name) => {
-    // await delay(300);
-    await fetch(`${API_URL}/collections/${name}`, { method: 'DELETE' });
+    const res = await fetch(`${API_URL}/collections/${name}`, { 
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!res.ok) throw new Error("Failed to delete collection");
     return true;
   },
 
   // --- Document CRUD ---
-  
-  // 1. Find All
+
   find: async (collection) => {
-    // await delay(100);
-    const res = await fetch(`${API_URL}/${collection}`);
-    return await res.json();
+    try {
+      const res = await fetch(`${API_URL}/${collection}`);
+      if (!res.ok) {
+        if (res.status === 404) return []; // Jika collection belum ada
+        throw new Error("Failed to fetch documents");
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error(`Find Error in ${collection}:`, error);
+      return [];
+    }
   },
 
-  // 2. Find One (Diperbarui untuk API)
-  // predicate sekarang harus OBJECT, contoh: { email: "budi@gmail.com" }
+  // Perbaikan: findOne sekarang menerima Object, bukan Function
   findOne: async (collection, predicate) => {
-    // await delay(200);
-    
-    // Jika predicate masih berupa function (sisa kode lama), kita harus error
+    // Safety check untuk kode lama
     if (typeof predicate === 'function') {
-      console.error("ERROR: DB.findOne now requires an Object, not a function.");
-      throw new Error("DB Update: Please pass an object to findOne (e.g., { email: val })");
+      console.error("Deprecated: DB.findOne now requires an Object (e.g., { email: '...' })");
+      throw new Error("Client Error: Invalid predicate format. Use object.");
     }
 
     const res = await fetch(`${API_URL}/${collection}/find-one`, {
@@ -60,22 +89,20 @@ export const DB = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(predicate)
     });
-    
+
+    if (!res.ok) return null; // Return null jika tidak ketemu
     return await res.json();
   },
 
-  // 3. Find By ID
   findById: async (collection, id) => {
-    // await delay(100);
     const res = await fetch(`${API_URL}/${collection}/${id}`);
+    if (!res.ok) return null;
     const data = await res.json();
     return data || null;
   },
 
-  // 4. Insert (Generate ID di frontend, kirim ke backend)
   insert: async (collection, data) => {
-    // await delay(200);
-    
+    // Generate ID 50 Digit di Frontend
     const newItem = {
       _id: generateNanoId(50), 
       createdAt: new Date().toISOString(),
@@ -89,25 +116,30 @@ export const DB = {
       body: JSON.stringify(newItem)
     });
 
-    if (!res.ok) throw new Error("Failed to insert");
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to insert document");
+    }
     return await res.json();
   },
 
-  // 5. Update
   update: async (collection, id, updates) => {
-    // await delay(200);
     const res = await fetch(`${API_URL}/${collection}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates)
     });
+
+    if (!res.ok) throw new Error("Failed to update document");
     return await res.json();
   },
 
-  // 6. Remove
   remove: async (collection, id) => {
-    // await delay(200);
-    await fetch(`${API_URL}/${collection}/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_URL}/${collection}/${id}`, { 
+      method: 'DELETE' 
+    });
+
+    if (!res.ok) throw new Error("Failed to delete document");
     return true;
   }
 };
