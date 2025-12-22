@@ -23,7 +23,12 @@ function App() {
           {/* Public Routes */}
           <Route element={<MainLayout />}>
             <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
+            
+            {/* URL Login Dinamis: /login/session-id-acak */}
+            <Route path="/login/:sessionId" element={<Login />} />
+            {/* Fallback jika akses /login langsung tanpa ID */}
+            <Route path="/login" element={<Navigate to={`/login/auth-${Date.now()}`} replace />} />
+            
             <Route path="/register" element={<Register />} />
           </Route>
 
@@ -33,11 +38,9 @@ function App() {
             <Route path="profile" element={<Profile />} />
             <Route path="collections" element={<Collections />} />
             <Route path="collections/:name" element={<CollectionDetail />} />
-            {/* Redirect playground ke collections utk sementara */}
             <Route path="playground" element={<Navigate to="collections" />} />
           </Route>
 
-          {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
