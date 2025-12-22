@@ -3,37 +3,40 @@ import { DB } from './db';
 const COLLECTION = 'users';
 
 export const AuthService = {
+  // Register User Baru
   register: async ({ name, email, password }) => {
     // 1. Cek apakah email sudah ada
+    // Menggunakan findOne yang sudah diperbaiki
     const existingUser = await DB.findOne(COLLECTION, (u) => u.email === email);
+    
     if (existingUser) {
       throw new Error("Email sudah terdaftar. Gunakan email lain.");
     }
 
-    // 2. Buat user baru (Password disimpan plain text utk demo, jgn di production)
+    // 2. Simpan user baru
     const newUser = await DB.insert(COLLECTION, {
       name,
       email,
-      password, // Di real app ini harus di-hash (bcrypt)
-      role: 'user',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}` // Auto avatar
+      password, // Note: Di production harus di-hash
+      role: 'admin', // Default jadi admin utk owner pertama
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`
     });
 
-    // 3. Simpan session (sederhana)
-    localStorage.setItem('session_user', JSON.stringify(newUser));
     return newUser;
   },
 
+  // Login User
   login: async ({ email, password }) => {
-    // 1. Cari user
+    // 1. Cari user berdasarkan email
+    // INI YANG SEBELUMNYA ERROR KARENA findOne HILANG
     const user = await DB.findOne(COLLECTION, (u) => u.email === email);
     
-    // 2. Validasi
+    // 2. Validasi password
     if (!user || user.password !== password) {
       throw new Error("Kombinasi Email dan Password salah.");
     }
 
-    // 3. Simpan session
+    // 3. Simpan sesi ke localStorage browser (bukan DB)
     localStorage.setItem('session_user', JSON.stringify(user));
     return user;
   },
@@ -43,6 +46,7 @@ export const AuthService = {
   },
 
   getCurrentUser: () => {
-    return JSON.parse(localStorage.getItem('session_user'));
+    const session = localStorage.getItem('session_user');
+    return session ? JSON.parse(session) : null;
   }
-};
+};-

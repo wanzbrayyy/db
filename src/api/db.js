@@ -11,7 +11,6 @@ export const DB = {
   // --- Collection Management ---
   getCollections: async () => {
     await delay(200);
-    // Default collections jika kosong
     const defaults = [
       { name: 'users', type: 'system' }, 
       { name: 'logs', type: 'system' }
@@ -45,16 +44,33 @@ export const DB = {
     let collections = await DB.getCollections();
     collections = collections.filter(c => c.name !== name);
     setStorage(META_COLLECTIONS_KEY, collections);
-    localStorage.removeItem(name); // Hapus data isinya juga
+    localStorage.removeItem(name);
     return true;
   },
 
-  // --- Document CRUD ---
+  // --- Document CRUD (YANG HILANG KEMARIN) ---
+  
+  // 1. Find All
   find: async (collection) => {
-    await delay(100); // Speed up for dashboard
+    await delay(100);
     return getStorage(collection);
   },
 
+  // 2. Find One (Wajib untuk Login)
+  findOne: async (collection, predicate) => {
+    await delay(200);
+    const items = getStorage(collection);
+    return items.find(predicate) || null;
+  },
+
+  // 3. Find By ID (Wajib untuk Detail)
+  findById: async (collection, id) => {
+    await delay(100);
+    const items = getStorage(collection);
+    return items.find(item => item._id === id) || null;
+  },
+
+  // 4. Insert
   insert: async (collection, data) => {
     await delay(200);
     const items = getStorage(collection);
@@ -62,14 +78,34 @@ export const DB = {
     const newItem = {
       _id: generateNanoId(50), 
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       ...data
     };
 
-    items.unshift(newItem); // Add to top
+    items.unshift(newItem);
     setStorage(collection, items);
     return newItem;
   },
 
+  // 5. Update (Wajib untuk Edit Profile)
+  update: async (collection, id, updates) => {
+    await delay(200);
+    let items = getStorage(collection);
+    const index = items.findIndex(item => item._id === id);
+    
+    if (index === -1) throw new Error("Document not found");
+
+    items[index] = { 
+      ...items[index], 
+      ...updates, 
+      updatedAt: new Date().toISOString() 
+    };
+
+    setStorage(collection, items);
+    return items[index];
+  },
+
+  // 6. Remove
   remove: async (collection, id) => {
     await delay(200);
     let items = getStorage(collection);
