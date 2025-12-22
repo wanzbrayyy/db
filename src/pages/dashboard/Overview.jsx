@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Database, FileJson, Activity, Server, Zap, Globe, Cpu } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'; // Tambahan untuk Chart
 import { DB } from '../../api/db';
 import { useAuth } from '../../context/AuthContext';
 import Card, { CardContent, CardTitle, CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import ConnectModal from '../../components/dashboard/ConnectModal'; 
+
+// Dummy Data untuk Grafik (Simulasi Realtime Traffic)
+const chartData = [
+  { time: '00:00', req: 120 }, { time: '04:00', req: 80 }, { time: '08:00', req: 450 },
+  { time: '12:00', req: 980 }, { time: '16:00', req: 850 }, { time: '20:00', req: 340 }, { time: '23:59', req: 190 },
+];
 
 export default function Overview() {
   const { user } = useAuth();
@@ -14,6 +21,7 @@ export default function Overview() {
     collections: 0, 
     docs: 0, 
     storage: '0 KB',
+    storagePercent: 0, // Tambahan untuk Storage Bar
     status: 'Checking...'
   });
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
@@ -49,11 +57,15 @@ export default function Overview() {
         const storageDisplay = storageSizeVal > 1024 
           ? `${(storageSizeVal / 1024).toFixed(2)} MB`
           : `${storageSizeVal.toFixed(2)} KB`;
+          
+        // Hitung persentase storage (Misal kuota free tier 500MB = 512000 KB)
+        const percent = Math.min((storageSizeVal / 512000) * 100, 100);
 
         setStats({ 
           collections: cols.length, 
           docs: totalDocs,
           storage: storageDisplay,
+          storagePercent: percent,
           status: 'Healthy'
         });
       } catch (e) {
@@ -94,52 +106,100 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* --- METRICS GRID --- */}
+      {/* --- METRICS GRID (Dengan Storage Bar) --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { 
-            title: "Collections", 
-            value: loading ? "..." : stats.collections, 
-            icon: Database, 
-            color: "text-sky-400",
-            sub: "Active namespaces"
-          },
-          { 
-            title: "Total Documents", 
-            value: loading ? "..." : stats.docs, 
-            icon: FileJson, 
-            color: "text-emerald-400",
-            sub: "Across all nodes"
-          },
-          { 
-            title: "Storage Size", 
-            value: loading ? "..." : stats.storage, 
-            icon: Server, 
-            color: "text-yellow-400",
-            sub: "Estimated usage"
-          },
-          { 
-            title: "Network Latency", 
-            value: "24ms", 
-            icon: Activity, 
-            color: "text-pink-400",
-            sub: "Region: AWS-SGP"
-          }, 
-        ].map((stat, idx) => (
-          <Card key={idx} className="border-white/5 bg-surface/40 hover:bg-surface/60 transition-all duration-300 group">
+        
+        {/* Collections Card */}
+        <Card className="border-white/5 bg-surface/40 hover:bg-surface/60 transition-all duration-300 group">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-textMuted group-hover:text-white transition-colors">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color} group-hover:scale-110 transition-transform`} />
+              <CardTitle className="text-sm font-medium text-textMuted group-hover:text-white transition-colors">Collections</CardTitle>
+              <Database className="h-4 w-4 text-sky-400 group-hover:scale-110 transition-transform" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white font-mono">{stat.value}</div>
-              <p className="text-xs text-textMuted mt-1">{stat.sub}</p>
+              <div className="text-2xl font-bold text-white font-mono">{loading ? "..." : stats.collections}</div>
+              <p className="text-xs text-textMuted mt-1">Active namespaces</p>
             </CardContent>
-          </Card>
-        ))}
+        </Card>
+
+        {/* Total Documents Card */}
+        <Card className="border-white/5 bg-surface/40 hover:bg-surface/60 transition-all duration-300 group">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-textMuted group-hover:text-white transition-colors">Total Documents</CardTitle>
+              <FileJson className="h-4 w-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white font-mono">{loading ? "..." : stats.docs}</div>
+              <p className="text-xs text-textMuted mt-1">Across all nodes</p>
+            </CardContent>
+        </Card>
+
+        {/* Storage Size Card (Dengan Progress Bar) */}
+        <Card className="border-white/5 bg-surface/40 hover:bg-surface/60 transition-all duration-300 group">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-textMuted group-hover:text-white transition-colors">Storage Size</CardTitle>
+              <Server className="h-4 w-4 text-yellow-400 group-hover:scale-110 transition-transform" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white font-mono">{loading ? "..." : stats.storage}</div>
+              
+              {/* Storage Usage Bar Implementation */}
+              <div className="w-full h-1.5 bg-white/10 rounded-full mt-3 overflow-hidden">
+                <div 
+                  className="h-full bg-yellow-400 rounded-full transition-all duration-1000" 
+                  style={{ width: `${Math.max(stats.storagePercent, 2)}%` }} // Minimal 2% biar kelihatan
+                ></div>
+              </div>
+              <p className="text-xs text-textMuted mt-1">{stats.storagePercent < 1 ? '< 1%' : `${stats.storagePercent.toFixed(1)}%`} used</p>
+            </CardContent>
+        </Card>
+
+        {/* Latency Card */}
+        <Card className="border-white/5 bg-surface/40 hover:bg-surface/60 transition-all duration-300 group">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-textMuted group-hover:text-white transition-colors">Network Latency</CardTitle>
+              <Activity className="h-4 w-4 text-pink-400 group-hover:scale-110 transition-transform" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white font-mono">24ms</div>
+              <p className="text-xs text-textMuted mt-1">Region: AWS-SGP</p>
+            </CardContent>
+        </Card>
+
       </div>
+
+      {/* --- CHART ACTIVITY SECTION (Baru) --- */}
+      <Card className="bg-[#09090b] border-white/5 p-6 shadow-2xl">
+         <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-white">Throughput Metrics</h3>
+              <p className="text-xs text-textMuted">Requests per hour (Real-time)</p>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-1 text-xs text-gray-400"><div className="w-2 h-2 bg-sky-500 rounded-full"></div> Read</div>
+              <div className="flex items-center gap-1 text-xs text-gray-400"><div className="w-2 h-2 bg-purple-500 rounded-full"></div> Write</div>
+            </div>
+         </div>
+         <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+               <AreaChart data={chartData}>
+                  <defs>
+                     <linearGradient id="colorReq" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                     </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+                  <XAxis dataKey="time" stroke="#444" tick={{fill: '#666', fontSize: 12}} />
+                  <YAxis stroke="#444" tick={{fill: '#666', fontSize: 12}} />
+                  <Tooltip 
+                    contentStyle={{backgroundColor: '#111', borderColor: '#333', borderRadius: '8px', color: '#fff'}} 
+                    itemStyle={{color: '#0ea5e9'}}
+                  />
+                  <Area type="monotone" dataKey="req" stroke="#0ea5e9" strokeWidth={2} fillOpacity={1} fill="url(#colorReq)" />
+               </AreaChart>
+            </ResponsiveContainer>
+         </div>
+      </Card>
 
       {/* --- INFRASTRUCTURE & TOPOLOGY --- */}
       <div className="grid md:grid-cols-3 gap-6">
