@@ -1,48 +1,73 @@
-// src/api/auth.js
+// URL Backend Vercel Anda
 const API_URL = 'https://dbw-nu.vercel.app/api/auth';
-import { generateNanoId } from '../utils/uuid';
 
 export const AuthService = {
+  // Register
   register: async ({ name, email, password }) => {
-    const _id = generateNanoId(50);
+    // Generate avatar default
     const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-
-    const res = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ _id, name, email, password, avatar })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.msg || 'Registration failed');
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('session_user', JSON.stringify(data.user));
+    // ID digenerate di backend atau frontend, kita kirim undefined biar backend handle atau kirim jika perlu
     
-    return data.user;
+    try {
+      const res = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, avatar })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.msg || data.error || 'Registration failed');
+
+      // Simpan Token & User ke LocalStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('session_user', JSON.stringify(data.user));
+      
+      return data.user;
+    } catch (err) {
+      throw err;
+    }
   },
 
+  // Login
   login: async ({ email, password }) => {
-    const res = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.msg || 'Login failed');
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('session_user', JSON.stringify(data.user));
+      const data = await res.json();
+      
+      if (!res.ok) {
+        // Handle jika backend mati/error html
+        if (typeof data !== 'object') throw new Error("Server Error");
+        throw new Error(data.msg || data.error || 'Login failed');
+      }
 
-    return data.user;
+      // Simpan Token Penting untuk Request Data nanti
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('session_user', JSON.stringify(data.user));
+
+      return data.user;
+    } catch (err) {
+      // Catch "Failed to fetch" (Network Error)
+      if (err.message === 'Failed to fetch') {
+        throw new Error("Cannot connect to server. Check your internet or backend status.");
+      }
+      throw err;
+    }
   },
 
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('session_user');
+    window.location.href = '/login'; // Force reload
   },
 
   getCurrentUser: () => {
-    return JSON.parse(localStorage.getItem('session_user'));
+    const userStr = localStorage.getItem('session_user');
+    return userStr ? JSON.parse(userStr) : null;
   },
 
   getToken: () => {

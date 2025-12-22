@@ -1,21 +1,7 @@
 import { generateNanoId } from '../utils/uuid';
-import { AuthService } from './auth'; // Wajib import ini untuk ambil Token
 
 // URL Backend Vercel
 const API_URL = 'https://dbw-nu.vercel.app/api/data';
-
-// Helper: Header Auth Otomatis (Token Wajib untuk Backend)
-const getHeaders = (isMultipart = false) => {
-  const token = AuthService.getToken();
-  const headers = {
-    'x-auth-token': token
-  };
-  // Jika bukan upload file (multipart), set Content-Type JSON
-  if (!isMultipart) {
-    headers['Content-Type'] = 'application/json';
-  }
-  return headers;
-};
 
 // Helper Cerdas: Cek apakah respon JSON atau Text
 const handleResponse = async (res) => {
@@ -41,7 +27,7 @@ export const DB = {
 
   getCollections: async () => {
     try {
-      const res = await fetch(`${API_URL}/collections`, { headers: getHeaders() });
+      const res = await fetch(`${API_URL}/collections`);
       const data = await handleResponse(res);
       
       // Validasi wajib array
@@ -61,7 +47,7 @@ export const DB = {
 
     const res = await fetch(`${API_URL}/collections`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name })
     });
     
@@ -71,23 +57,16 @@ export const DB = {
   deleteCollection: async (name) => {
     const res = await fetch(`${API_URL}/collections/${name}`, { 
       method: 'DELETE',
-      headers: getHeaders()
+      headers: { 'Content-Type': 'application/json' }
     });
     return await handleResponse(res);
   },
 
   // --- Document CRUD ---
 
-  // Updated: Support Query Params (filtering, sorting)
-  // Contoh penggunaan: DB.find('users', { 'age[gt]': 20, sort: '-createdAt' })
-  find: async (collection, queryParams = {}) => {
+  find: async (collection) => {
     try {
-      // Convert object params to query string
-      const queryString = new URLSearchParams(queryParams).toString();
-      const url = queryString ? `${API_URL}/${collection}?${queryString}` : `${API_URL}/${collection}`;
-
-      const res = await fetch(url, { headers: getHeaders() });
-      
+      const res = await fetch(`${API_URL}/${collection}`);
       if (res.status === 404) return [];
       
       const data = await handleResponse(res);
@@ -105,18 +84,19 @@ export const DB = {
 
     const res = await fetch(`${API_URL}/${collection}/find-one`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(predicate)
     });
 
     if (res.status === 404) return null;
     
+    // Khusus findOne, kadang return null (bukan JSON error)
     const text = await res.text();
     return text ? JSON.parse(text) : null;
   },
 
   findById: async (collection, id) => {
-    const res = await fetch(`${API_URL}/${collection}/${id}`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/${collection}/${id}`);
     if (res.status === 404) return null;
     return await handleResponse(res);
   },
@@ -131,7 +111,7 @@ export const DB = {
 
     const res = await fetch(`${API_URL}/${collection}`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newItem)
     });
 
@@ -141,61 +121,18 @@ export const DB = {
   update: async (collection, id, updates) => {
     const res = await fetch(`${API_URL}/${collection}/${id}`, {
       method: 'PUT',
-      headers: getHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates)
     });
 
     return await handleResponse(res);
   },
 
-  // Updated: Support Permanent Delete flag
-  remove: async (collection, id, permanent = false) => {
-    const url = permanent 
-      ? `${API_URL}/${collection}/${id}?permanent=true` 
-      : `${API_URL}/${collection}/${id}`;
-
-    const res = await fetch(url, { 
-      method: 'DELETE',
-      headers: getHeaders()
+  remove: async (collection, id) => {
+    const res = await fetch(`${API_URL}/${collection}/${id}`, { 
+      method: 'DELETE' 
     });
 
-    return await handleResponse(res);
-  },
-
-  // --- NEW FEATURES (Matching Backend Data Routes) ---
-
-  // 1. Bulk Import
-  importData: async (collection, jsonData) => {
-    const res = await fetch(`${API_URL}/${collection}/import`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(jsonData)
-    });
-    return await handleResponse(res);
-  },
-
-  // 2. Trash Bin (Get Deleted Items)
-  getTrash: async (collection) => {
-    const res = await fetch(`${API_URL}/${collection}/trash`, { headers: getHeaders() });
-    const data = await handleResponse(res);
-    return Array.isArray(data) ? data : [];
-  },
-
-  // 3. Restore Item
-  restore: async (collection, id) => {
-    const res = await fetch(`${API_URL}/${collection}/restore/${id}`, {
-      method: 'POST',
-      headers: getHeaders()
-    });
-    return await handleResponse(res);
-  },
-
-  // 4. Empty Trash
-  emptyTrash: async (collection) => {
-    const res = await fetch(`${API_URL}/${collection}/empty-trash`, {
-      method: 'DELETE',
-      headers: getHeaders()
-    });
     return await handleResponse(res);
   }
 };
