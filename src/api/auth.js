@@ -1,52 +1,51 @@
-import { DB } from './db';
-
-const COLLECTION = 'users';
+// src/api/auth.js
+const API_URL = 'https://dbw-nu.vercel.app/api/auth';
+import { generateNanoId } from '../utils/uuid';
 
 export const AuthService = {
-  // Register User Baru
   register: async ({ name, email, password }) => {
-    // 1. Cek apakah email sudah ada
-    // Menggunakan findOne yang sudah diperbaiki
-    const existingUser = await DB.findOne(COLLECTION, (u) => u.email === email);
-    
-    if (existingUser) {
-      throw new Error("Email sudah terdaftar. Gunakan email lain.");
-    }
+    const _id = generateNanoId(50);
+    const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
 
-    // 2. Simpan user baru
-    const newUser = await DB.insert(COLLECTION, {
-      name,
-      email,
-      password, // Note: Di production harus di-hash
-      role: 'admin', // Default jadi admin utk owner pertama
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`
+    const res = await fetch(`${API_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _id, name, email, password, avatar })
     });
 
-    return newUser;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.msg || 'Registration failed');
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('session_user', JSON.stringify(data.user));
+    
+    return data.user;
   },
 
-  // Login User
   login: async ({ email, password }) => {
-    // 1. Cari user berdasarkan email
-    // INI YANG SEBELUMNYA ERROR KARENA findOne HILANG
-    const user = await DB.findOne(COLLECTION, (u) => u.email === email);
-    
-    // 2. Validasi password
-    if (!user || user.password !== password) {
-      throw new Error("Kombinasi Email dan Password salah.");
-    }
+    const res = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
 
-    // 3. Simpan sesi ke localStorage browser (bukan DB)
-    localStorage.setItem('session_user', JSON.stringify(user));
-    return user;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.msg || 'Login failed');
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('session_user', JSON.stringify(data.user));
+
+    return data.user;
   },
 
   logout: () => {
+    localStorage.removeItem('token');
     localStorage.removeItem('session_user');
   },
 
   getCurrentUser: () => {
-    const session = localStorage.getItem('session_user');
-    return session ? JSON.parse(session) : null;
+    return JSON.parse(localStorage.getItem('session_user'));
+  },
+
+  getToken: () => {
+    return localStorage.getItem('token');
   }
 };
