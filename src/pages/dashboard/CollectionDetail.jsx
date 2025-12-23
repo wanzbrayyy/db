@@ -1,63 +1,101 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDatabase } from '../../hooks/useDatabase';
-import { Trash2, Plus, Download, Upload, Filter, Copy, ChevronLeft, Search, Database, Layers } from 'lucide-react';
+import { Trash2, Plus, Download, Upload, Filter, Copy, ChevronLeft, Search, Database, Layers, Check, X } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input'; // Import Input
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const API_URL = 'https://dbw-nu.vercel.app/api/data';
 
-// --- KOMPONEN INDEX MODAL BARU ---
-function IndexModal({ isOpen, onClose, collectionName }) {
+// --- KOMPONEN SCHEMA BUILDER MODAL ---
+function SchemaModal({ isOpen, onClose, collectionName, detectedSchema }) {
   if (!isOpen) return null;
-  const indices = [
-    { field: '_id', type: 'ASC', usage: 'High' },
-    { field: '_uid', type: 'ASC', usage: 'High' },
-    { field: 'email', type: 'Unique', usage: 'Low' },
-  ];
+  const [schemaFields, setSchemaFields] = useState(
+    detectedSchema.map(f => ({ name: f, type: 'string', required: false }))
+  );
+  
+  const addField = () => setSchemaFields(prev => [...prev, { name: '', type: 'string', required: false }]);
+  const updateField = (index, key, value) => {
+    setSchemaFields(prev => prev.map((f, i) => i === index ? { ...f, [key]: value } : f));
+  };
+  const removeField = (index) => setSchemaFields(prev => prev.filter((_, i) => i !== index));
+
+  const handleSave = () => {
+    // Simulasi Save Schema Validation
+    const cleanSchema = schemaFields.filter(f => f.name.trim() !== '');
+    console.log("Simulating Schema Save:", cleanSchema);
+    alert("Schema Validation Saved (Simulated)! Documents will now be checked.");
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-      <Card className="w-full max-w-lg bg-[#09090b] border-white/10 relative">
+      <Card className="w-full max-w-3xl bg-[#09090b] border-white/10 relative">
         <div className="p-4 border-b border-white/10 flex justify-between items-center">
-          <h3 className="text-lg font-bold text-white">Indexes for {collectionName}</h3>
+          <h3 className="text-lg font-bold text-white">Schema Validation for <span className="text-sky-400 font-mono">{collectionName}</span></h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white"><X size={20}/></button>
         </div>
-        <div className="p-4 space-y-4">
-          <Button variant="primary" size="sm" className="w-full">Create New Index</Button>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-400">
-              <thead className="text-xs text-white uppercase bg-white/5">
-                <tr><th className="px-3 py-2">Field</th><th>Type</th><th>Usage</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                {indices.map(i => (
-                  <tr key={i.field} className="border-b border-white/5">
-                    <td className="px-3 py-2 font-mono">{i.field}</td>
-                    <td>{i.type}</td>
-                    <td><span className={`px-2 py-0.5 rounded text-xs ${i.usage === 'High' ? 'bg-green-500/10 text-green-400' : 'bg-white/10 text-gray-400'}`}>{i.usage}</span></td>
-                    <td><button className="text-red-400 hover:text-red-300 transition">Drop</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+          
+          <p className="text-sm text-gray-500">Define field types and requirements for data integrity.</p>
+
+          <div className="grid grid-cols-4 gap-4 text-xs font-bold text-gray-400 uppercase border-b border-white/10 pb-2">
+            <div>Field Name</div>
+            <div>Type</div>
+            <div>Required</div>
+            <div>Actions</div>
           </div>
+          
+          {schemaFields.map((field, index) => (
+            <div key={index} className="grid grid-cols-4 gap-4 items-center">
+              <Input 
+                placeholder="Field Name"
+                value={field.name}
+                onChange={e => updateField(index, 'name', e.target.value)}
+                className="py-1.5 text-sm"
+              />
+              <select 
+                value={field.type}
+                onChange={e => updateField(index, 'type', e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white focus:ring-0"
+              >
+                {['string', 'number', 'boolean', 'date', 'object', 'array'].map(type => (
+                   <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => updateField(index, 'required', !field.required)}
+                className={`px-3 py-1.5 rounded-lg border text-sm transition ${field.required ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-white/5 text-gray-400 border-white/10'}`}
+              >
+                {field.required ? <Check size={16}/> : <X size={16}/>}
+              </button>
+              <Button onClick={() => removeField(index)} variant="danger" size="sm"><Trash2 size={14}/></Button>
+            </div>
+          ))}
+
+          <Button onClick={addField} variant="secondary" size="sm"><Plus size={14}/> Add Field</Button>
+        </div>
+        <div className="p-4 border-t border-white/10 flex justify-end">
+          <Button onClick={handleSave} variant="primary">Save Schema</Button>
         </div>
       </Card>
     </div>
   );
 }
-// --- AKHIR KOMPONEN INDEX MODAL ---
+// --- AKHIR KOMPONEN SCHEMA BUILDER MODAL ---
 
 
-// --- COMPONENT UTAMA ---
+// --- COMPONENT UTAMA CollectionDetail ---
 export default function CollectionDetail() {
   const { name } = useParams();
   const { data, loading, create, remove, fetchAll } = useDatabase(name);
   const [filter, setFilter] = useState('');
   const [selectedDoc, setSelectedDoc] = useState(null);
-  const [isIndexModalOpen, setIsIndexModalOpen] = useState(false); // State Modal Index
+  const [isIndexModalOpen, setIsIndexModalOpen] = useState(false);
+  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false); // State Modal Schema
   const fileInputRef = useRef(null);
 
   const safeData = Array.isArray(data) ? data : [];
@@ -69,16 +107,17 @@ export default function CollectionDetail() {
     fetchAll();
   }, [name]); 
 
-  // SCHEMA AUTO DETECT
+  // SCHEMA AUTO DETECTION
   const detectSchema = useCallback(() => {
     if (safeData.length === 0) return [];
     const fields = new Set();
     safeData.forEach(doc => Object.keys(doc).forEach(key => fields.add(key)));
-    return Array.from(fields).slice(0, 5); // Tampilkan 5 field teratas
+    // Filter internal fields
+    return Array.from(fields).filter(f => !f.startsWith('_')).slice(0, 5); 
   }, [safeData]);
   const detectedSchema = detectSchema();
 
-  // Handle Export
+  // Handle Export (Sama seperti sebelumnya)
   const handleExport = () => {
     const blob = new Blob([JSON.stringify(safeData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -88,7 +127,7 @@ export default function CollectionDetail() {
     a.click();
   };
 
-  // Handle Import
+  // Handle Import (Sama seperti sebelumnya)
   const handleImport = async (e) => {
     // ... (kode import sama seperti sebelumnya) ...
     const file = e.target.files[0];
@@ -124,7 +163,9 @@ export default function CollectionDetail() {
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col">
-      <IndexModal isOpen={isIndexModalOpen} onClose={() => setIsIndexModalOpen(false)} collectionName={name} />
+      {/* Modals */}
+      {/* <IndexModal isOpen={isIndexModalOpen} onClose={() => setIsIndexModalOpen(false)} collectionName={name} /> */}
+      <SchemaModal isOpen={isSchemaModalOpen} onClose={() => setIsSchemaModalOpen(false)} collectionName={name} detectedSchema={detectedSchema} />
 
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 border-b border-white/10 pb-4">
@@ -152,8 +193,11 @@ export default function CollectionDetail() {
            
            {/* Action Buttons */}
            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setIsSchemaModalOpen(true)}>
+                <Layers size={14} /> <span className="hidden sm:inline">Schema</span>
+              </Button>
               <Button size="sm" variant="secondary" onClick={() => setIsIndexModalOpen(true)}>
-                <Layers size={14} /> <span className="hidden sm:inline">Indexes</span>
+                <Database size={14} /> <span className="hidden sm:inline">Indexes</span>
               </Button>
               <Button size="sm" variant="secondary" onClick={() => fileInputRef.current.click()}>
                  <Upload size={14} /> Import
@@ -169,25 +213,26 @@ export default function CollectionDetail() {
         </div>
       </div>
 
-      {/* SCHEMA & FILTER PRESETS */}
-      <div className="bg-surface/30 border border-white/10 rounded-xl p-4 mb-4 space-y-2">
+      {/* SCHEMA & FILTER PRESETS (FIXED UI) */}
+      <div className="bg-surface/30 border border-white/10 rounded-xl p-4 mb-4 space-y-3">
          <div className="flex flex-wrap gap-2 items-center text-xs text-gray-400">
             <span className="font-bold text-white mr-1">Schema Detected:</span>
             {detectedSchema.map(field => (
-                <span key={field} className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono">
+                <span key={field} className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-xs">
                     {field}
                 </span>
             ))}
+            {detectedSchema.length === 0 && <span className="text-red-400">No fields detected.</span>}
          </div>
          <div className="flex flex-wrap gap-2 items-center text-xs text-gray-400">
             <span className="font-bold text-white mr-1">Filter Presets:</span>
-            {['status: "active"', 'role: "admin"', 'views[gt]: 100'].map((preset, i) => (
+            {['status:active', 'role:admin', 'views[gt]:100', '_id:abc...'].map((preset, i) => (
                <button 
                   key={i} 
-                  onClick={() => setFilter(preset.split(':')[0])} // Contoh simple filter
-                  className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition"
+                  onClick={() => setFilter(preset.split(':')[1])} // Contoh simple filter
+                  className="px-3 py-1 rounded-full bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition text-xs font-mono"
                >
-                  {preset}
+                  {preset.split(':')[0]}
                </button>
             ))}
          </div>
@@ -195,7 +240,7 @@ export default function CollectionDetail() {
 
       <div className="flex flex-1 gap-4 overflow-hidden">
         {/* Document List */}
-        <div className={`flex-1 overflow-y-auto space-y-2 pr-2 ${selectedDoc ? 'md:w-1/2' : 'w-full'} transition-all`}>
+        <div className={`flex-1 overflow-y-auto space-y-2 pr-2 ${selectedDoc ? 'hidden md:block' : ''}`}>
            {loading ? (
              <div className="text-center py-10 text-gray-500 animate-pulse">Fetching Data...</div>
            ) : (
