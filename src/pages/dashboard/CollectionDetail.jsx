@@ -1,34 +1,40 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDatabase } from '../../hooks/useDatabase';
-import { Trash2, Plus, Download, Upload, Filter, Copy, ChevronLeft, Search, Database, Layers, Check, X } from 'lucide-react';
+import { Trash2, Plus, Download, Upload, Filter, Copy, ChevronLeft, Search, Database, Layers, Check, X, Code } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-import Input from '../../components/ui/Input'; // Import Input
+import Input from '../../components/ui/Input';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { SchemaAPI } from '../../api/schema'; // Import API Schema
 
 const API_URL = 'https://dbw-nu.vercel.app/api/data';
 
-// --- KOMPONEN SCHEMA BUILDER MODAL ---
-function SchemaModal({ isOpen, onClose, collectionName, detectedSchema }) {
+// --- KOMPONEN SCHEMA BUILDER MODAL BARU (API Real) ---
+function SchemaModal({ isOpen, onClose, collectionName, initialSchemaFields }) {
   if (!isOpen) return null;
-  const [schemaFields, setSchemaFields] = useState(
-    detectedSchema.map(f => ({ name: f, type: 'string', required: false }))
-  );
-  
+  const [schemaFields, setSchemaFields] = useState(initialSchemaFields);
+  const [loading, setLoading] = useState(false);
+
   const addField = () => setSchemaFields(prev => [...prev, { name: '', type: 'string', required: false }]);
   const updateField = (index, key, value) => {
     setSchemaFields(prev => prev.map((f, i) => i === index ? { ...f, [key]: value } : f));
   };
   const removeField = (index) => setSchemaFields(prev => prev.filter((_, i) => i !== index));
 
-  const handleSave = () => {
-    // Simulasi Save Schema Validation
+  const handleSave = async () => {
     const cleanSchema = schemaFields.filter(f => f.name.trim() !== '');
-    console.log("Simulating Schema Save:", cleanSchema);
-    alert("Schema Validation Saved (Simulated)! Documents will now be checked.");
-    onClose();
+    setLoading(true);
+    try {
+        await SchemaAPI.saveSchema(collectionName, cleanSchema);
+        alert("Schema Validation Saved Successfully!");
+        onClose();
+    } catch (e) {
+        alert("Error saving schema: " + e.message);
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -67,19 +73,20 @@ function SchemaModal({ isOpen, onClose, collectionName, detectedSchema }) {
                 ))}
               </select>
               <button
+                type="button"
                 onClick={() => updateField(index, 'required', !field.required)}
                 className={`px-3 py-1.5 rounded-lg border text-sm transition ${field.required ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-white/5 text-gray-400 border-white/10'}`}
               >
                 {field.required ? <Check size={16}/> : <X size={16}/>}
               </button>
-              <Button onClick={() => removeField(index)} variant="danger" size="sm"><Trash2 size={14}/></Button>
+              <Button type="button" onClick={() => removeField(index)} variant="danger" size="sm"><Trash2 size={14}/></Button>
             </div>
           ))}
 
-          <Button onClick={addField} variant="secondary" size="sm"><Plus size={14}/> Add Field</Button>
+          <Button type="button" onClick={addField} variant="secondary" size="sm" className="mt-4"><Plus size={14}/> Add Field</Button>
         </div>
         <div className="p-4 border-t border-white/10 flex justify-end">
-          <Button onClick={handleSave} variant="primary">Save Schema</Button>
+          <Button onClick={handleSave} variant="primary" isLoading={loading}>Save Schema</Button>
         </div>
       </Card>
     </div>
@@ -95,7 +102,8 @@ export default function CollectionDetail() {
   const [filter, setFilter] = useState('');
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [isIndexModalOpen, setIsIndexModalOpen] = useState(false);
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false); // State Modal Schema
+  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false); 
+  const [currentSchema, setCurrentSchema] = useState([]); // State untuk Schema saat ini
   const fileInputRef = useRef(null);
 
   const safeData = Array.isArray(data) ? data : [];
@@ -103,8 +111,19 @@ export default function CollectionDetail() {
     JSON.stringify(doc).toLowerCase().includes(filter.toLowerCase())
   );
 
+  // FETCH SCHEMA & DATA
   useEffect(() => {
-    fetchAll();
+    const loadData = async () => {
+        fetchAll();
+        try {
+            const schemaData = await SchemaAPI.getSchema(name);
+            setCurrentSchema(schemaData.fields || []);
+        } catch (e) {
+            // Jika error (belum ada schema), set default empty
+            setCurrentSchema([]);
+        }
+    };
+    loadData();
   }, [name]); 
 
   // SCHEMA AUTO DETECTION
@@ -112,10 +131,12 @@ export default function CollectionDetail() {
     if (safeData.length === 0) return [];
     const fields = new Set();
     safeData.forEach(doc => Object.keys(doc).forEach(key => fields.add(key)));
-    // Filter internal fields
     return Array.from(fields).filter(f => !f.startsWith('_')).slice(0, 5); 
   }, [safeData]);
   const detectedSchema = detectSchema();
+  // Tambahkan field yang sudah disave ke deteksi jika belum ada
+  const schemaFieldsForModal = [...currentSchema, ...detectedSchema.filter(f => !currentSchema.find(s => s.name === f)).map(f => ({ name: f, type: 'string', required: false }))];
+
 
   // Handle Export (Sama seperti sebelumnya)
   const handleExport = () => {
@@ -129,7 +150,6 @@ export default function CollectionDetail() {
 
   // Handle Import (Sama seperti sebelumnya)
   const handleImport = async (e) => {
-    // ... (kode import sama seperti sebelumnya) ...
     const file = e.target.files[0];
     if (!file) return;
     
@@ -155,7 +175,7 @@ export default function CollectionDetail() {
   const handleDuplicate = async (doc) => {
     const { _id, createdAt, updatedAt, _uid, ...rest } = doc;
     if(confirm("Duplicate this document?")) {
-        await create({ ...rest, source: _id }); // Tambah field source
+        await create({ ...rest, source: _id }); 
         alert("Document Cloned!");
         fetchAll();
     }
@@ -165,7 +185,12 @@ export default function CollectionDetail() {
     <div className="h-[calc(100vh-8rem)] flex flex-col">
       {/* Modals */}
       {/* <IndexModal isOpen={isIndexModalOpen} onClose={() => setIsIndexModalOpen(false)} collectionName={name} /> */}
-      <SchemaModal isOpen={isSchemaModalOpen} onClose={() => setIsSchemaModalOpen(false)} collectionName={name} detectedSchema={detectedSchema} />
+      <SchemaModal 
+        isOpen={isSchemaModalOpen} 
+        onClose={() => setIsSchemaModalOpen(false)} 
+        collectionName={name} 
+        initialSchemaFields={schemaFieldsForModal} 
+      />
 
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 border-b border-white/10 pb-4">
@@ -194,7 +219,7 @@ export default function CollectionDetail() {
            {/* Action Buttons */}
            <div className="flex gap-2">
               <Button size="sm" variant="secondary" onClick={() => setIsSchemaModalOpen(true)}>
-                <Layers size={14} /> <span className="hidden sm:inline">Schema</span>
+                <Code size={14} /> <span className="hidden sm:inline">Schema</span>
               </Button>
               <Button size="sm" variant="secondary" onClick={() => setIsIndexModalOpen(true)}>
                 <Database size={14} /> <span className="hidden sm:inline">Indexes</span>
@@ -213,7 +238,7 @@ export default function CollectionDetail() {
         </div>
       </div>
 
-      {/* SCHEMA & FILTER PRESETS (FIXED UI) */}
+      {/* SCHEMA & FILTER PRESETS */}
       <div className="bg-surface/30 border border-white/10 rounded-xl p-4 mb-4 space-y-3">
          <div className="flex flex-wrap gap-2 items-center text-xs text-gray-400">
             <span className="font-bold text-white mr-1">Schema Detected:</span>
