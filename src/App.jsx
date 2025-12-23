@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { ToastProvider } from './hooks/useToast'; // Import Toast Provider
+import { ToastProvider } from './hooks/useToast'; // <-- FIX: import path sudah benar
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -30,7 +30,7 @@ import Upgrade from './pages/dashboard/Upgrade';
 function App() {
   return (
     <ThemeProvider>
-      <ToastProvider> {/* WRAP SELURUH APLIKASI DENGAN TOAST PROVIDER */}
+      <ToastProvider> 
         <AuthProvider>
           <Router>
             <Routes>
