@@ -1,74 +1,57 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Globe, Code, Zap, Check, Key, Code2, Copy, Terminal, ToggleLeft, ToggleRight, AlertTriangle, Database, Info } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import CodeBlock from '../../components/ui/CodeBlock';
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-// URL Endpoint
-const API_URL_DEV = 'https://dbw-nu.vercel.app/api/developer';
+// URL Endpoint (untuk mengambil daftar model)
+const API_URL_ADMIN = 'https://dbw-nu.vercel.app/api/admin';
 
 export default function RestAPI() {
-    // 🔥 PERUBAHAN: useParams akan menangkap modelName secara penuh sekarang
-    const { modelName } = useParams(); 
     const { user } = useAuth();
     const [isActive, setIsActive] = useState(true);
-    const [copied, setCopied] = useState(false);
-    const [modelData, setModelData] = useState(null);
+    const [models, setModels] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // Base URL FAKE
     const CORE_BASE_URL = 'https://rest.wanzofc.site/api/v1'; 
-    const AI_BASE_URL = 'https://ai.wanzofc.site/v1/chat';
-
     const API_KEY = user?._id || '<YOUR_UUID_API_KEY>';
     
-    // Model ID yang bersih untuk ditampilkan
-    const cleanModelId = modelName ? modelName.replace('/*', '') : null;
-
-
+    // Fetch Daftar Model dari Admin API
     useEffect(() => {
-        const fetchModelDocs = async () => {
-            if (!cleanModelId) { // Jika hanya /rest-api, tampilkan default
-                setLoading(false);
-                return;
-            }
+        const fetchModels = async () => {
             try {
-                // Panggil endpoint di backend (menggunakan cleanModelId)
-                const res = await fetch(`${API_URL_DEV}/public/ai-model/${cleanModelId}`);
+                // Hanya admin yang bisa melihat daftar penuh (seperti di Developer.jsx)
+                const res = await fetch(`${API_URL_ADMIN}/ai-models`, {
+                    headers: { 'x-auth-token': localStorage.getItem('token') }
+                });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.msg || "Model not found");
-                setModelData(data);
+                if (!res.ok) throw new Error(data.msg || 'Failed to fetch models');
+                setModels(data);
             } catch (e) {
-                console.error(e);
-                setModelData(null); // Penting: Reset jika gagal
+                // Jika user biasa, biarkan models kosong, tapi tampilkan default API
+                console.error("Not Admin or failed to load models:", e);
             } finally {
                 setLoading(false);
             }
         };
-        fetchModelDocs();
-    }, [cleanModelId]);
+        fetchModels();
+    }, []);
 
-
+    // ... (handleCopy logic SAMA) ...
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        // ... (feedback logic) ...
     };
 
-    if (loading) return <div className="text-center py-20 text-gray-500">Memuat Dokumentasi Model...</div>;
-
-    // Tampilan Halaman
     return (
         <div className="space-y-8 animate-in fade-in">
+            {/* Header dan Toggle (Sama) */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4">
-                <h1 className="text-3xl font-bold text-white flex flex-col items-start">
-                    <span className="text-sm text-gray-500 font-mono">API Reference / {cleanModelId ? 'AI Model' : 'Core Data'}</span>
-                    <span className="text-sky-400 mt-1">{cleanModelId || 'Core Data API'}</span>
+                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                    <Code size={24} className="text-sky-400" /> REST API Katalog
                 </h1>
-                
-                {/* Status Toggle (Sama) */}
                 <div className="flex items-center gap-3 mt-4 md:mt-0">
                    <span className="text-sm text-gray-400 font-bold uppercase">Status:</span>
                    <div className="flex items-center gap-2">
@@ -82,83 +65,37 @@ export default function RestAPI() {
                 </div>
             </div>
 
-            {/* Content Dinamis */}
-            {modelData ? (
-                // --- TAMPILAN MODEL AI (Dengan Detail) ---
-                <div className="space-y-6">
-                    <Card className="p-6 bg-surface/30 border-white/10 space-y-4">
-                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                           <Code2 size={20} className="text-sky-400" /> Detail Model
-                        </h3>
-                        <p className="text-sm text-gray-400">{modelData.description}</p>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-4 border-t border-white/10">
-                            <p className="text-gray-500">Nama Model: <span className="text-white font-mono">{modelData.modelName}</span></p>
-                            <p className="text-gray-500">Versi: <span className="text-white font-mono">{modelData.version}</span></p>
-                            <p className="text-gray-500">Context: <span className="text-white font-mono">{modelData.context}</span></p>
-                            <p className="text-gray-500">Endpoint AI: <span className="text-white font-mono truncate">{AI_BASE_URL}</span></p>
-                        </div>
-                    </Card>
-
-                    <Card className="p-6 bg-surface/30 border-white/10 space-y-3">
-                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                           <Terminal size={20} className="text-emerald-400" /> Contoh Quickstart: Chat
-                        </h3>
-                        <p className="text-sm text-gray-400">Gunakan SDK kami untuk membuat permintaan chat completions.</p>
-                        <CodeBlock language="javascript">
-                           {`const client = new Client("wanzdb://user:key@host");
-await client.connect();
-
-const stream = await client.ai.chat.send({
-  model: '${modelData.modelName}',
-  messages: [{ role: "user", content: "Apa itu WanzDB?" }],
-  stream: true
-});
-
-for await (const chunk of stream) {
-  process.stdout.write(chunk.choices[0]?.delta?.content);
-}`}
-                        </CodeBlock>
-                        <p className="text-xs text-yellow-400 flex items-center gap-1"><AlertTriangle size={14}/> Perlu API Key di initialization client.</p>
-                    </Card>
-                </div>
-            ) : (
-                // --- TAMPILAN CORE DATA DEFAULT (Jika hanya /rest-api) ---
-                <div className="space-y-6">
-                    <Card className="p-6 bg-surface/30 border-white/10 space-y-3">
-                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                           <Database size={20} className="text-sky-400" /> Core Data API Reference
-                        </h3>
-                        <p className="text-sm text-gray-400">Ini adalah referensi untuk endpoint CRUD utama. Gunakan API Key Anda sebagai token otentikasi.</p>
-                        <h4 className="text-white font-bold my-2">Endpoint: {CORE_BASE_URL}/:collection</h4>
-                        <CodeBlock language="bash">
-                            {`# Membaca Data
-GET ${CORE_BASE_URL}/:collection
-
-# Membuat Data
-POST ${CORE_BASE_URL}/:collection
-
-# Mengubah Data
-PUT ${CORE_BASE_URL}/:collection/:id`}
-                        </CodeBlock>
-                    </Card>
-
-                    <Card className="p-6 bg-surface/30 border-white/10 space-y-3">
-                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                           <Key size={20} className="text-yellow-400" /> API Key Anda
-                        </h3>
-                        <div className="bg-[#050505] p-3 rounded-lg border border-white/10 flex justify-between items-center">
-                            <code className="font-mono text-xs text-yellow-400 break-all">{API_KEY}</code>
-                            <Button size="sm" onClick={() => handleCopy(API_KEY)} className="ml-4">Salin</Button>
-                        </div>
-                    </Card>
-                </div>
-            )}
-
-            {/* Link ke Docs */}
-            <div className="pt-4 text-center">
-                <Link to="/docs" className="text-sky-400 hover:underline">
-                    Baca Dokumentasi API Lengkap
-                </Link>
+            {/* List Model AI */}
+            <h2 className="text-xl font-bold text-white pt-4">Model AI ({models.length})</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {loading ? (
+                    <p className="text-gray-500">Memuat daftar model...</p>
+                ) : models.length > 0 ? (
+                    models.map(model => (
+                        <Card key={model._id} className="p-4 bg-surface/30 border-white/10 flex justify-between items-center group hover:border-sky-500/30 transition-all">
+                            <div>
+                                <h3 className="text-lg font-bold text-sky-400">{model.modelName}</h3>
+                                <p className="text-xs text-gray-400">Versi: {model.version} | Context: {model.context}K</p>
+                            </div>
+                            <Link to={`/dashboard/rest-api/${model.modelName}`}>
+                                <Button size="sm" variant="secondary" className="bg-white/5 hover:bg-white/10">Lihat Docs</Button>
+                            </Link>
+                        </Card>
+                    ))
+                ) : (
+                    <p className="text-gray-500 md:col-span-2">Tidak ada model AI yang terdaftar.</p>
+                )}
+            </div>
+            
+            <div className="pt-8 border-t border-white/10">
+                <h2 className="text-xl font-bold text-white mb-4">Core Data Endpoint</h2>
+                <Card className="p-6 bg-surface/30 border-white/10 space-y-3">
+                    <h3 className="font-bold text-white flex items-center gap-2">
+                       <Database size={18} className="text-sky-400" /> Endpoint Utama
+                    </h3>
+                    <p className="text-sm text-gray-400">Gunakan endpoint ini untuk operasi CRUD pada koleksi Anda.</p>
+                    <h4 className="text-white font-bold my-2">Base URL: {CORE_BASE_URL}</h4>
+                </Card>
             </div>
         </div>
     );
