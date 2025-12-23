@@ -3,7 +3,7 @@ import { Globe, Code, Zap, Check, Key, Code2, Copy, Terminal, ToggleLeft, Toggle
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import CodeBlock from '../../components/ui/CodeBlock';
-import { useState, useEffect } from 'react-router-dom';
+import { useState, useEffect } from 'react'; // 🔥 PERBAIKAN: Import dari 'react', bukan 'react-router-dom'
 import { useAuth } from '../../context/AuthContext';
 
 // URL Endpoint (untuk mengambil daftar model)
@@ -39,7 +39,6 @@ export default function RestAPI() {
         fetchModels();
     }, []);
 
-    // ... (handleCopy logic SAMA) ...
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text);
         // ... (feedback logic) ...
