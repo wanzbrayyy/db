@@ -9,6 +9,8 @@ import { useToast } from '../../hooks/useToast';
 
 // URL Endpoint
 const API_URL_DEV_PUBLIC = 'https://dbw-nu.vercel.app/api/developer/public';
+// 🔥 URL PROXY BARU
+const PROXY_URL_CHAT = 'https://dbw-nu.vercel.app/api/developer/ai-chat-proxy'; 
 const AI_ENDPOINT = 'https://ai.wanzofc.site/v1/chat/completions';
 const API_KEY = '<YOUR_UUID_API_KEY>'; // Placeholder
 
@@ -61,9 +63,9 @@ export default function RestAPIDetail() {
     const { showToast } = useToast();
     const location = useLocation(); 
     
-    // 🔥 PERBAIKAN: Ambil dan decode sisa path (untuk nama model yang mengandung / dan :)
+    // Ambil dan decode sisa path
     const pathSegment = location.pathname.split('/dashboard/rest-api/')[1];
-    const modelName = pathSegment ? decodeURIComponent(pathSegment) : null; 
+    const cleanModelId = pathSegment ? decodeURIComponent(pathSegment).replace('/*', '') : null; 
     
     const [modelData, setModelData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -74,10 +76,10 @@ export default function RestAPIDetail() {
     // Dapatkan Model Data
     useEffect(() => {
         const fetchModelDocs = async () => {
-            if (!modelName) { setLoading(false); return; }
+            if (!cleanModelId) { setLoading(false); return; }
             try {
                 // Panggil endpoint publik yang baru
-                const res = await fetch(`${API_URL_DEV_PUBLIC}/ai-model/${modelName}`);
+                const res = await fetch(`${API_URL_DEV_PUBLIC}/ai-model/${cleanModelId}`);
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.msg || "Model not found");
                 setModelData(data);
@@ -89,17 +91,47 @@ export default function RestAPIDetail() {
             }
         };
         fetchModelDocs();
-    }, [modelName]);
+    }, [cleanModelId]);
     
     // Logic Simulasi/Realtime API Call
     const handleTestApi = async () => {
-        setIsRunning(true);
-        setOutput("Running...");
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        if (!prompt || !modelData) return showToast("Prompt dan Model wajib diisi!", 'error');
         
-        setOutput("fungsi utama rest api adalah memungkinkan komunikasi antar sistem. ia menggunakan metode http standar (get, post, put, delete) untuk mengakses dan memanipulasi data. ini sangat penting untuk aplikasi web modern dan layanan mikro. (simulasi)");
-        setIsRunning(false);
-        showToast("Test API Selesai!", 'success');
+        setIsRunning(true);
+        setOutput("Menghubungi OpenRouter via proxy backend...");
+
+        try {
+            // Panggil PROXY BACKEND untuk request AI
+            const res = await fetch(PROXY_URL_CHAT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': localStorage.getItem('token'), // Kirim token otentikasi user
+                },
+                body: JSON.stringify({
+                    modelName: modelData.modelName, 
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7,
+                    max_tokens: 100,
+                })
+            });
+
+            const data = await res.json();
+            
+            if (!res.ok || data.detail) {
+                throw new Error(data.msg || data.detail?.message || "AI Request Error.");
+            }
+
+            const finalAnswer = data.choices[0]?.message?.content || "Tidak ada jawaban yang diterima.";
+            setOutput(finalAnswer);
+            showToast("Test API Sukses!", 'success');
+            
+        } catch (e) {
+            setOutput(`ERROR: ${e.message}`);
+            showToast("Test API Gagal: " + e.message, 'error');
+        } finally {
+            setIsRunning(false);
+        }
     };
 
     // CURL Generator
