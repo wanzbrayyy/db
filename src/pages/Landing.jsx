@@ -41,7 +41,7 @@ export default function Landing() {
           </motion.div>
 
           <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tight text-white font-sans mb-8 leading-tight">
-            The Database for <br />
+            DATABASE for <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">
               Future-Proof Applications
             </span>
