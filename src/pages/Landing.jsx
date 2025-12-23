@@ -1,7 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Terminal, Globe, Zap, ShieldCheck, Database, LayoutGrid } from 'lucide-react';
+import { ArrowRight, Terminal, Globe, Zap, ShieldCheck, LayoutGrid, Cpu } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { generateNanoId } from '../utils/uuid';
+import { motion } from 'framer-motion';
+import Card from '../components/ui/Card'; // Pastikan Card ter-import jika diperlukan di masa depan
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -10,8 +12,23 @@ export default function Landing() {
     navigate(`/login/auth-${generateNanoId(8)}`);
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 }, // Tambahkan hidden
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } } // Tambahkan visible
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="relative isolate overflow-hidden bg-background">
+    <motion.div 
+      initial="hidden" 
+      animate="visible" 
+      variants={containerVariants} 
+      className="relative isolate overflow-hidden bg-background"
+    >
       
       {/* --- BACKGROUND EFFECTS --- */}
       <div className="absolute top-0 -left-4 w-96 h-96 bg-sky-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-10 animate-blob"></div>
@@ -21,63 +38,56 @@ export default function Landing() {
       <div className="relative pt-24 pb-20 lg:pt-36 lg:pb-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
           
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-xs font-medium text-white mb-8 hover:bg-white/10 transition cursor-default">
+          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-xs font-medium text-white mb-8 hover:bg-white/10 transition cursor-default">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
             </span>
-            <span>v2.4 is now available in Public Beta</span>
-          </div>
+            <span>fitur enterprise sekarang tersedia di semua tingkatan</span>
+          </motion.div>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white font-sans mb-8 leading-tight">
-            The Database for <br />
+          <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tight text-white font-sans mb-8 leading-tight">
+            basis data untuk <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">
-              Modern Applications
+              aplikasi masa depan
             </span>
-          </h1>
+          </motion.h1>
           
-          <p className="text-lg md:text-xl text-textMuted leading-relaxed max-w-2xl mx-auto mb-12">
-            Experience the speed of an in-memory datastore with the durability of a document database. 
-            Built for developers who ship fast.
-          </p>
+          <motion.p variants={itemVariants} className="text-lg md:text-xl text-textMuted leading-relaxed max-w-3xl mx-auto mb-12">
+            wanzdb dirancang dari nol untuk penyimpanan data dengan latensi nol dan ketersediaan tinggi. kami menyediakan api dokumen yang kuat dan familiar yang memungkinkan anda berfokus secara eksklusif pada pembangunan fitur, bukan mengelola kluster kubernetes yang kompleks. sebarkan skema anda secara instan dan tingkatkan skala hingga jutaan permintaan tanpa hambatan.
+          </motion.p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/register">
               <Button size="lg" variant="primary" className="w-full sm:w-auto font-bold h-12 px-8">
-                Start Building Free
+                mulai buat gratis
               </Button>
             </Link>
             <button 
               onClick={handleSmartLogin} 
               className="w-full sm:w-auto h-12 px-8 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white font-medium transition hover:border-sky-500/30 flex items-center justify-center gap-2"
             >
-              <Terminal size={18} /> Open Console
+              <Terminal size={18} /> buka konsol
             </button>
-          </div>
+          </motion.div>
 
           {/* Code Preview */}
-          <div className="mt-20 mx-auto max-w-4xl transform hover:scale-[1.01] transition duration-500">
+          <motion.div variants={itemVariants} className="mt-20 mx-auto max-w-4xl transform hover:scale-[1.01] transition duration-500">
             <div className="rounded-xl bg-[#0a0a0a] border border-white/10 shadow-2xl overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-white/[0.02]">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/20"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/20"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500/20"></div>
-                </div>
-                <div className="mx-auto text-xs text-textMuted font-mono">server.js</div>
+                <div className="flex gap-2"><div className="w-3 h-3 rounded-full bg-red-500/20"></div><div className="w-3 h-3 rounded-full bg-yellow-500/20"></div><div className="w-3 h-3 rounded-full bg-green-500/20"></div></div>
+                <div className="mx-auto text-xs text-textMuted font-mono">wanzdb-client.js</div>
               </div>
               <div className="p-6 md:p-8 text-left font-mono text-sm overflow-x-auto">
                  <pre>
                   <code className="language-javascript">
-                    <span className="text-purple-400">import</span> <span className="text-yellow-100">{`{ DB }`}</span> <span className="text-purple-400">from</span> <span className="text-green-400">'@wanzdb/client'</span>;<br/><br/>
-                    <span className="text-gray-500">// Initialize instant connection</span><br/>
-                    <span className="text-purple-400">const</span> user <span className="text-sky-400">=</span> <span className="text-purple-400">await</span> DB.<span className="text-blue-400">create</span>(<span className="text-green-400">'users'</span>, <span className="text-yellow-100">{`{`}</span><br/>
-                    &nbsp;&nbsp;<span className="text-sky-300">email</span>: <span className="text-green-400">'dev@wanzdb.com'</span>,<br/>
-                    &nbsp;&nbsp;<span className="text-sky-300">role</span>: <span className="text-green-400">'admin'</span>,<br/>
-                    &nbsp;&nbsp;<span className="text-sky-300">features</span>: <span className="text-yellow-100">['fast', 'secure']</span><br/>
-                    <span className="text-yellow-100">{`}`});</span><br/><br/>
-                    <span className="text-gray-500">// Returns strictly typed JSON</span><br/>
-                    <span className="text-purple-400">console</span>.<span className="text-blue-400">log</span>(user._id); <span className="text-gray-500">// "8k92Lm..." (Collision-free ID)</span>
+                    <span className="text-purple-400">import</span> {'{ client }'} <span className="text-purple-400">from</span> <span className="text-green-400">'wanzdb'</span>;<br/><br/>
+                    <span className="text-gray-500">// hubungkan secara aman menggunakan uuid/api key anda</span><br/>
+                    <span className="text-purple-400">const</span> client = <span className="text-purple-400">new</span> client(<span className="text-yellow-400">"wanzdb://user:key@host"</span>);<br/>
+                    <span className="text-purple-400">await</span> client.<span className="text-blue-400">connect</span>();<br/><br/>
+                    <span className="gray-500">// lakukan kueri terindeks yang cepat</span><br/>
+                    <span className="text-purple-400">const</span> hasil = <span className="text-purple-400">await</span> client.koleksi(<span className="text-green-400">'pesanan'</span>).<span className="text-blue-400">cari</span>({});<br/>
+                    <span className="text-purple-400">console</span>.<span className="text-blue-400">log</span>(<span className="text-green-400">`ditemukan ${hasil.length} catatan dalam ${hasil.latency}ms`</span>);
                   </code>
                  </pre>
               </div>
@@ -86,62 +96,72 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* --- FEATURES GRID --- */}
+      {/* --- FEATURES GRID (Detaill) --- */}
       <div id="features" className="py-24 bg-surface/30 border-y border-white/5 relative">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-base font-semibold leading-7 text-sky-400">direkayasa untuk keandalan</h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              fitur platform yang menyederhanakan pengembangan
+            </p>
+            <p className="mt-4 text-gray-400">kami menawarkan seperangkat alat yang kuat dan jaminan arsitektur yang memastikan aplikasi anda tetap cepat, aman, dan dapat ditingkatkan skalanya tanpa batas sejak baris kode pertama hingga jutaan pengguna.</p>
+          </div>
+
+          <motion.div initial="hidden" animate="visible" variants={containerVariants} className="grid md:grid-cols-3 gap-8">
             {[
               {
-                title: 'Global Edge Network',
-                desc: 'Your data is automatically replicated across multiple regions for low-latency access worldwide.',
+                title: 'arsitektur tepi global',
+                desc: 'data anda secara otomatis di-shard dan direplikasi di seluruh jaringan tepi global kami. desain ini meminimalkan latensi, menempatkan data anda secara fisik lebih dekat ke pengguna akhir anda, memastikan pembacaan di bawah 50ms terlepas dari lokasi.',
                 icon: Globe,
                 color: 'text-sky-400'
               },
               {
-                title: 'Instant Scalability',
-                desc: 'Handle millions of requests per second without managing a single server or cluster.',
+                title: 'skalabilitas tanpa downtime',
+                desc: 'beradaptasi secara instan terhadap lonjakan lalu lintas tanpa intervensi manual. arsitektur serverless kami menangani penyeimbangan beban dinamis, menjamin bahwa kinerja database anda tetap konsisten dan andal selama permintaan puncak.',
                 icon: Zap,
                 color: 'text-yellow-400'
               },
               {
-                title: 'Enterprise Security',
-                desc: 'Encryption at rest and in transit. Role-based access control built directly into the core.',
+                title: 'model keamanan terpadu',
+                desc: 'implementasikan autentikasi dua faktor (2fa) untuk akses konsol dan kendalikan izin api key untuk permintaan terprogram. data dilindungi dengan enkripsi aes-256 saat diam dan dalam perjalanan (tls 1.3).',
                 icon: ShieldCheck,
                 color: 'text-emerald-400'
               },
-            ].map((feature, idx) => (
-              <div key={idx} className="group p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 hover:bg-white/[0.08] transition duration-300">
-                <div className={`w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition ${feature.color}`}>
+            ].map((feature) => (
+              <motion.div 
+                key={feature.title} 
+                variants={itemVariants}
+                className="group p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-sky-500/30 hover:bg-white/[0.08] transition duration-300"
+              >
+                <div className={`w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center mb-6 ${feature.color}`}>
                   <feature.icon />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-3">{feature.title}</h3>
+                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
                 <p className="text-textMuted leading-relaxed text-sm">{feature.desc}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* --- TECH STACK / CTA --- */}
+      {/* --- CTA --- */}
       <div className="py-24">
          <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="rounded-3xl bg-gradient-to-b from-[#111] to-black border border-white/10 p-8 md:p-16 text-center overflow-hidden relative">
-               <div className="absolute top-0 left-0 w-full h-full bg-[url('/grid.svg')] opacity-20 pointer-events-none"></div>
-               
                <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 relative z-10">
-                 Ready to deploy?
+                 siap sebarkan ide besar anda berikutnya?
                </h2>
                <p className="text-textMuted max-w-2xl mx-auto mb-10 relative z-10">
-                 Join thousands of developers building the next generation of web applications.
-                 No credit card required for development.
+                 tingkat gratis menawarkan akses penuh ke semua fitur, termasuk api developer yang kuat,
+                 untuk segera memulai proyek anda. tidak diperlukan kartu kredit untuk mulai mengembangkan.
                </p>
                
                <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
                  <Link to="/docs" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition">
-                    <LayoutGrid size={18} /> Read Documentation
+                    <LayoutGrid size={18} /> jelajahi dokumentasi
                  </Link>
                  <Link to="/register" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-white text-black font-bold hover:bg-gray-200 transition shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                    Create Database
+                    buat instance database
                  </Link>
                </div>
             </div>
@@ -152,20 +172,19 @@ export default function Landing() {
       <footer className="border-t border-white/5 bg-background py-12">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
            <div className="flex items-center gap-2 opacity-80">
-             <Database className="text-sky-500" size={20} />
+             <Cpu className="text-sky-500" size={20} />
              <span className="text-lg font-bold font-mono text-white">wanzdb</span>
            </div>
            <div className="flex gap-8 text-sm text-textMuted">
-             <Link to="/docs" className="hover:text-white transition">Documentation</Link>
-             <a href="#" className="hover:text-white transition">Status</a>
-             <a href="#" className="hover:text-white transition">GitHub</a>
-             <a href="#" className="hover:text-white transition">Twitter</a>
+             <Link to="/docs" className="hover:text-white transition">dokumentasi</Link>
+             <a href="#" className="hover:text-white transition">status</a>
+             <a href="#" className="hover:text-white transition">github</a>
            </div>
-           <p className="text-textMuted text-xs">
-             © 2025 Wanz Technology. All rights reserved.
+           <p className="text-gray-500 text-xs">
+             © 2025 wanz technology. semua hak dilindungi.
            </p>
         </div>
       </footer>
-    </div>
+    </motion.div>
   );
 }
