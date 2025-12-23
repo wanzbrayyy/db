@@ -1,28 +1,21 @@
-import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Bell, Command, Search, Moon, Sun, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
+import { Bell, Command, Search, Moon, Sun, Menu, PanelLeftClose, PanelLeftOpen, Zap } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useState } from 'react';
 import { cn } from '../../utils/cn';
 
-export default function NavbarDashboard({ toggleSidebar, toggleMobile, isCollapsed }) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme() || { theme: 'dark', toggleTheme: () => {} };
-  
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  
-  // Dummy Notification Data
-  const notificationsData = [ 
-    { title: "New Feature: Trash Bin is Live!", time: "1m", read: false },
-    { title: "Billing: Usage at 80% limit.", time: "2h", read: false },
-    { title: "System: Maintenance complete.", time: "1d", read: true },
-  ];
+function NotificationsModal({ notifications }) {
+    const [unreadCount, setUnreadCount] = useState(notifications.filter(n => !n.read).length);
+    
+    // Simulasikan marking all as read
+    const markAllRead = () => {
+        // Logika real-nya: call API
+        setUnreadCount(0);
+        // Lakukan set local state agar tidak ada notif baru muncul lagi
+    };
 
-  // Logic untuk Modal Notifikasi (Dibuat di sini untuk kesederhanaan)
-  function NotificationsModal({ notifications }) {
-    const markAllRead = () => { /* Simulasi Mark All Read */ };
     return (
-        <div className="absolute right-0 mt-3 w-80 bg-background border border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+        <div className="absolute right-0 mt-3 w-80 bg-[#09090b] border border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             <div className="p-4 flex justify-between items-center border-b border-white/10">
                 <h3 className="font-bold text-white">Notifications</h3>
                 <button onClick={markAllRead} className="text-xs text-sky-400 hover:text-sky-300 transition">
@@ -43,43 +36,27 @@ export default function NavbarDashboard({ toggleSidebar, toggleMobile, isCollaps
                 )}
             </div>
             <Link to="/dashboard/upgrade" className="block p-3 text-center text-sm text-yellow-400 bg-black/30 hover:bg-black/50 transition">
-                See plans to increase limits
+                <Zap size={14} className="inline mr-2"/> See plans to increase limits
             </Link>
         </div>
     );
-  }
-  
-  // Breadcrumbs Generator yang lebih cerdas (Mendukung /rest-api/model-name)
-  const fullPath = location.pathname;
-  let pathnames = [];
-  
-  if (fullPath.startsWith('/dashboard/rest-api/')) {
-    // Kasus 1: /dashboard/rest-api/nex-agi/deepseek-v3.1-nex-n1:free
-    const parts = fullPath.split('/');
-    pathnames = ['dashboard', 'rest-api', parts.slice(3).join('/')];
-  } else {
-    // Kasus 2: Normal /dashboard/collections/users
-    pathnames = fullPath.split('/').filter((x) => x);
-  }
-  
-  const getPathTo = (index) => {
-    // Jika itu adalah item terakhir (Model Name), kembalikan path penuh
-    if (index === pathnames.length - 1 && pathnames[index-1] === 'rest-api') {
-        return `/dashboard/rest-api/${pathnames[index]}`;
-    }
-    // Jika tidak, buat path normal
-    return '/' + pathnames.slice(0, index + 1).join('/');
-  };
+}
 
-  const getDisplayName = (value, index) => {
-    if (index === pathnames.length - 1 && pathnames[index-1] === 'rest-api') {
-        // Ganti '/' di nama model menjadi ' / ' dan UPPERCASE
-        return value.replace(/:/g, ' ').replace(/\//g, ' / ').toUpperCase();
-    }
-    // Kapitalisasi normal
-    return value.replace(/-/g, ' ').charAt(0).toUpperCase() + value.replace(/-/g, ' ').slice(1);
-  }
+export default function NavbarDashboard({ toggleSidebar, toggleMobile, isCollapsed }) {
+  const location = useLocation();
+  const { theme, toggleTheme } = useTheme() || { theme: 'dark', toggleTheme: () => {} };
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  
+  const notificationsData = [ // Dummy Notifications
+    { title: "New Feature: Trash Bin is Live!", time: "1m", read: false },
+    { title: "Billing: Usage at 80% limit.", time: "2h", read: false },
+    { title: "System: Maintenance complete.", time: "1d", read: true },
+  ];
 
+  // Breadcrumbs Generator... (sama seperti sebelumnya)
+  const pathnames = location.pathname.split('/').filter((x) => x);
+  const getPathTo = (index) => '/' + pathnames.slice(0, index + 1).join('/');
+  
   return (
     <header className="h-16 border-b border-white/10 bg-[#09090b]/80 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4 md:px-6 transition-colors duration-300">
       
@@ -93,27 +70,22 @@ export default function NavbarDashboard({ toggleSidebar, toggleMobile, isCollaps
         </button>
 
         {/* Breadcrumbs Interaktif */}
-        <div className="flex items-center text-sm text-gray-400 min-w-0">
-          <Link to="/dashboard" className="hover:text-white transition shrink-0">Console</Link>
+        <div className="flex items-center text-sm text-gray-400">
+          <Link to="/dashboard" className="hover:text-white transition">Console</Link>
           {pathnames.map((value, index) => {
             const isLast = index === pathnames.length - 1;
             const pathTo = getPathTo(index);
             
-            // Skip 'dashboard' di breadcrumbs
-            if (value === 'dashboard') return null;
-
             return (
-              <div key={index} className="flex items-center min-w-0">
-                <span className="mx-2 text-gray-600 shrink-0">/</span>
-                <span className="truncate min-w-0">
-                    {isLast ? (
-                      <span className="text-white font-medium whitespace-nowrap">{getDisplayName(value, index)}</span>
-                    ) : (
-                      <Link to={pathTo} className="hover:text-white transition whitespace-nowrap">
-                        {getDisplayName(value, index)}
-                      </Link>
-                    )}
-                </span>
+              <div key={index} className="flex items-center">
+                <span className="mx-2 text-gray-600">/</span>
+                {isLast ? (
+                  <span className="capitalize text-white font-medium">{value.replace('-', ' ')}</span>
+                ) : (
+                  <Link to={pathTo} className="capitalize hover:text-white transition">
+                    {value.replace('-', ' ')}
+                  </Link>
+                )}
               </div>
             );
           })}
@@ -122,7 +94,6 @@ export default function NavbarDashboard({ toggleSidebar, toggleMobile, isCollaps
 
       {/* Right Actions */}
       <div className="flex items-center gap-3 md:gap-4">
-        {/* Command Search Trigger */}
         <button className="hidden md:flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-xs text-gray-400 hover:bg-white/10 transition">
            <Search size={14} />
            <span>Search...</span>
