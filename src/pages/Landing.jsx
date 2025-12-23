@@ -48,7 +48,7 @@ export default function Landing() {
           </motion.h1>
           
           <motion.p variants={itemVariants} className="text-lg md:text-xl text-textMuted leading-relaxed max-w-3xl mx-auto mb-12">
-            **WANZDB** is engineered from the ground up for zero-latency, high-availability data storage. We provide a robust, familiar Document API that lets you focus exclusively on building features, not managing complex Kubernetes clusters or sharding configurations. Deploy your schema instantly and scale to millions of requests without friction.
+            **WanzDB** is engineered from the ground up for zero-latency, high-availability data storage. We provide a robust, familiar Document API that lets you focus exclusively on building features, not managing complex Kubernetes clusters or sharding configurations. Deploy your schema instantly and scale to millions of requests without friction.
           </motion.p>
 
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -77,10 +77,10 @@ export default function Landing() {
                   <code className="language-javascript">
                     <span className="text-purple-400">import</span> {'{ Client }'} <span className="text-purple-400">from</span> <span className="text-green-400">'wanzdb'</span>;<br/><br/>
                     <span className="text-gray-500">// Connect securely using your UUID/API Key</span><br/>
-                    <span className="text-purple-400">const</span> client = <span className="text-purple-400">new</span> Client(<span className="text-yellow-400">'wanzdb://user:key@host'</span>);<br/>
+                    <span className="text-purple-400">const</span> client = <span className="text-purple-400">new</span> Client(<span className="text-yellow-400">"wanzdb://user:key@host"</span>);<br/>
                     <span className="text-purple-400">await</span> client.<span className="text-blue-400">connect</span>();<br/><br/>
-                    <span className="text-gray-500">// Perform a fast, indexed query</span><br/>
-                    <span className="text-purple-400">const</span> results = <span className="text-purple-400">await</span> client.collection(<span className="text-green-400">'orders'</span>).<span className="text-blue-400">find</span>({'{}'});<br/>
+                    <span className="gray-500">// Perform a fast, indexed query</span><br/>
+                    <span className="text-purple-400">const</span> results = <span className="text-purple-400">await</span> client.collection(<span className="text-green-400">'orders'</span>).<span className="text-blue-400">find</span>({});<br/>
                     <span className="text-purple-400">console</span>.<span className="text-blue-400">log</span>(<span className="text-green-400">`Found ${results.length} records in ${results.latency}ms`</span>);
                   </code>
                  </pre>
@@ -175,7 +175,7 @@ export default function Landing() {
              <a href="#" className="hover:text-white transition">GitHub</a>
            </div>
            <p className="text-gray-500 text-xs">
-             © 2025 WANZOFC DATABASE.
+             © 2025 Wanz Technology. All rights reserved.
            </p>
         </div>
       </footer>
