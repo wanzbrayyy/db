@@ -5,6 +5,9 @@ import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    {/* TAMBAHKAN FALLBACK BACKGROUND COLOR DI ROOT ELEMENT */}
+    <div className="bg-[#09090b] min-h-screen"> 
+      <App />
+    </div>
   </React.StrictMode>,
 );
