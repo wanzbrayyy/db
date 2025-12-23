@@ -41,7 +41,7 @@ export default function Landing() {
           </motion.div>
 
           <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tight text-white font-sans mb-8 leading-tight">
-            DATABASE for <br />
+            The Database for <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">
               Future-Proof Applications
             </span>
@@ -175,7 +175,7 @@ export default function Landing() {
              <a href="#" className="hover:text-white transition">GitHub</a>
            </div>
            <p className="text-gray-500 text-xs">
-             © 2025 Wanz Technology. All rights reserved.
+             © 2025 WANZOFC DATABASE.
            </p>
         </div>
       </footer>
