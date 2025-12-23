@@ -1,7 +1,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Database, User, Code, Settings, LogOut, Trash2, Hexagon } from 'lucide-react';
+import { LayoutDashboard, Database, User, Code, Settings, LogOut, Trash2, Hexagon, Globe, Code2 } from 'lucide-react'; // Import Code2/Globe
 import { AuthService } from '../../api/auth';
 import { cn } from '../../utils/cn';
+
+// Simulasi Font Awesome Icons
+const faIcon = (IconComponent, faClass) => {
+    return <IconComponent size={20} className={`fa ${faClass}`} />;
+};
 
 export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, toggleMobile }) {
   const location = useLocation();
@@ -13,8 +18,9 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
   };
 
   const menus = [
-    { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Collections', path: '/dashboard/collections', icon: Database },
+    { name: 'REST API', path: '/dashboard/rest-api', icon: Code2 }, // MENU BARU
     { name: 'Developer', path: '/dashboard/developer', icon: Code }, 
     { name: 'Trash Bin', path: '/dashboard/trash', icon: Trash2 }, 
     { name: 'Settings', path: '/dashboard/profile', icon: Settings },
@@ -32,10 +38,8 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
       />
 
       <aside className={cn(
-        "fixed top-0 left-0 z-40 h-screen bg-[#09090b] border-r border-white/10 transition-transform duration-300 flex flex-col",
+        "fixed top-0 left-0 z-40 h-screen bg-[#09090b] border-r border-white/10 transition-all duration-300 flex flex-col",
         // LOGIKA RESPONSIF:
-        // Mobile: Default hidden (-translate-x-full), muncul jika isMobileOpen
-        // Desktop: Selalu muncul, lebar berubah based on isCollapsed
         "w-64 md:translate-x-0", 
         !isMobileOpen && "-translate-x-full", // Mobile: Sembunyi jika tidak open
         isCollapsed ? "md:w-20" : "md:w-64"   // Desktop: Lebar dinamis
@@ -44,7 +48,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
         {/* Header */}
         <div className={cn(
           "h-16 flex items-center px-4 border-b border-white/10 shrink-0", 
-          isCollapsed ? "md:justify-center" : "justify-between"
+          isCollapsed ? "justify-center" : "justify-between"
         )}>
           <div className="flex items-center gap-3 overflow-hidden">
               <div className="bg-sky-500/10 p-1.5 rounded shrink-0">
@@ -68,7 +72,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
               <Link 
                 key={menu.path} 
                 to={menu.path}
-                onClick={() => isMobileOpen && toggleMobile()} // Tutup sidebar otomatis di HP
+                onClick={() => isMobileOpen && toggleMobile()} 
                 title={isCollapsed ? menu.name : ''}
                 className={cn(
                   "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 group relative overflow-hidden whitespace-nowrap",
@@ -78,9 +82,9 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
                   isCollapsed && "md:justify-center"
                 )}
               >
-                <menu.icon size={20} className={cn("shrink-0", isActive ? "text-white" : "group-hover:text-sky-400")} />
+                {/* Menggunakan menu.icon Lucide */}
+                {faIcon(menu.icon, `fa-${menu.name.toLowerCase().replace(/\s/g, '-')}`)}
                 
-                {/* Teks Menu: Logic sama dengan Header */}
                 <span className={cn(
                   "transition-all duration-200",
                   isCollapsed ? "md:hidden" : "block"
@@ -88,7 +92,6 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
                   {menu.name}
                 </span>
                 
-                {/* Tooltip Hover Khusus Desktop Collapsed */}
                 {isCollapsed && (
                    <div className="hidden md:block absolute left-full ml-2 px-2 py-1 bg-[#1a1a1a] border border-white/10 rounded text-xs text-white opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-xl">
                       {menu.name}
@@ -108,7 +111,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
                isCollapsed && "md:justify-center"
             )}
           >
-            <LogOut size={20} className="shrink-0" />
+            {faIcon(LogOut, 'fa-sign-out')}
             <span className={cn(isCollapsed ? "md:hidden" : "block")}>Sign Out</span>
           </button>
         </div>
