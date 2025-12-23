@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Database, FileJson, Activity, Server, Zap, Globe, Cpu } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'; // Tambahan untuk Chart
 import { DB } from '../../api/db';
 import { useAuth } from '../../context/AuthContext';
 import Card, { CardContent, CardTitle, CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import ConnectModal from '../../components/dashboard/ConnectModal'; // Import Modal
+import ConnectModal from '../../components/dashboard/ConnectModal'; 
 
 // Dummy Data untuk Grafik (Simulasi Realtime Traffic)
 const chartData = [
@@ -40,8 +40,9 @@ export default function Overview() {
         
         if (cols && cols.length > 0) {
           // Promise.allSettled lebih aman daripada Promise.all 
+          // (satu error tidak membatalkan semua)
           const results = await Promise.allSettled(
-            cols.map(c => DB.find(c.name).catch(() => []))
+            cols.map(c => DB.find(c.name))
           );
           
           results.forEach(result => {
@@ -166,7 +167,7 @@ export default function Overview() {
 
       </div>
 
-      {/* --- CHART ACTIVITY SECTION --- */}
+      {/* --- CHART ACTIVITY SECTION (Baru) --- */}
       <Card className="bg-[#09090b] border-white/5 p-6 shadow-2xl">
          <div className="flex justify-between items-center mb-6">
             <div>

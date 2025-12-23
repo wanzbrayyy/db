@@ -1,42 +1,34 @@
 import { useState } from 'react';
-import { X, Copy, Check, Eye, EyeOff, Terminal, ShieldCheck, Globe } from 'lucide-react';
+import { X, Copy, Check, Eye, EyeOff, Terminal, ShieldCheck, Code2 } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 export default function ConnectModal({ isOpen, onClose, user }) {
-  if (!isOpen) return null;
+  if (!isOpen || !user) return null; // Pastikan user ada
 
   const [showPassword, setShowPassword] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
-  const [activeTab, setActiveTab] = useState('uri'); // 'uri' or 'code'
+  const [activeTab, setActiveTab] = useState('uri'); 
+  const [langTab, setLangTab] = useState('node'); 
 
-  // Generate Credentials Palsu tapi terlihat Real
-  const username = user?.name.toLowerCase().replace(/\s/g, '') || 'admin';
-  const dbPassword = user?._id?.substring(0, 16) || 'a1b2c3d4e5f6g7h8'; // Ambil sebagian ID sbg password
+  // Generate Credentials: Gunakan Nama dan ID Asli dari DB
+  const username = user?.name?.toLowerCase().replace(/\s/g, '') || 'admin-user';
+  const apiKey = user?._id || 'UUID-NOT-FOUND-50-CHARS'; // Gunakan ID 50 Digit sebagai API Key
   const host = "dbw-nu.vercel.app";
   
-  // Connection String Format
-  const connectionString = `wanzdb://${username}:<password>@${host}/?retryWrites=true&w=majority`;
+  // Connection String (Menampilkan API Key/UUID sebagai password)
+  const connectionString = `wanzdb://${username}:<API_KEY>@${host}/?w=majority`;
   const displayString = showPassword 
-    ? connectionString.replace('<password>', dbPassword)
-    : connectionString.replace('<password>', '••••••••');
+    ? connectionString.replace('<API_KEY>', apiKey)
+    : connectionString.replace('<API_KEY>', '••••••••••••••••••••••••••••••••••••••••••••••••••');
 
-  // Code Snippet Node.js
-  const codeSnippet = `const wanzdb = require('wanzdb');
-
-const client = new wanzdb.Client('${displayString.replace('••••••••', dbPassword)}');
-
-async function run() {
-  try {
-    await client.connect();
-    console.log("Connected to WanzDB Cluster!");
-    const doc = await client.db("main").collection("users").findOne();
-    console.log(doc);
-  } finally {
-    await client.close();
-  }
-}
-run();`;
+  // SNIPPETS GENERATOR
+  const realConnectionString = connectionString.replace('<API_KEY>', apiKey);
+  const snippets = {
+    node: `const { Client } = require('wanzdb');\n\nconst client = new Client('${realConnectionString}');\n\nasync function run() {\n  await client.connect();\n  console.log("Connected. User ID: ${user._id}");\n}`,
+    python: `from wanzdb import Client\n\nclient = Client("${realConnectionString}")\nclient.connect() # Start connection`,
+    php: `$client = new WanzDB\\Client("${realConnectionString}");\n$client->connect(); // PHP PDO style`
+  };
 
   const handleCopy = (text, field) => {
     navigator.clipboard.writeText(text);
@@ -46,73 +38,52 @@ run();`;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
-      {/* Modal Content */}
-      <Card className="w-full max-w-2xl bg-[#09090b] border-white/10 shadow-2xl relative animate-fade-in-up">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+      <Card className="w-full max-w-2xl bg-surface border-border shadow-2xl relative animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <h2 className="text-xl font-bold text-textMain flex items-center gap-2">
               <Globe size={20} className="text-sky-400" /> Connect to Cluster
             </h2>
-            <p className="text-sm text-textMuted mt-1">Setup connection for application <b>Production</b>.</p>
+            <p className="text-sm text-textMuted mt-1">Use this key for programmatic access.</p>
           </div>
-          <button onClick={onClose} className="text-textMuted hover:text-white transition">
-            <X size={24} />
-          </button>
+          <button onClick={onClose} className="text-textMuted hover:text-textMain"><X size={24} /></button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-white/10 px-6">
-          <button 
-            onClick={() => setActiveTab('uri')}
-            className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'uri' ? 'border-sky-500 text-sky-400' : 'border-transparent text-textMuted hover:text-white'}`}
-          >
-            Drivers (Node.js, Go, etc)
-          </button>
-          <button 
-            onClick={() => setActiveTab('code')}
-            className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'code' ? 'border-sky-500 text-sky-400' : 'border-transparent text-textMuted hover:text-white'}`}
-          >
-            Full Code Snippet
-          </button>
+        <div className="flex border-b border-border px-6">
+          <button onClick={() => setActiveTab('uri')} className={`py-3 px-4 text-sm font-medium border-b-2 transition ${activeTab === 'uri' ? 'border-sky-500 text-sky-400' : 'border-transparent text-textMuted hover:text-textMain'}`}>Connection String</button>
+          <button onClick={() => setActiveTab('code')} className={`py-3 px-4 text-sm font-medium border-b-2 transition ${activeTab === 'code' ? 'border-sky-500 text-sky-400' : 'border-transparent text-textMuted hover:text-textMain'}`}>Code Snippet</button>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
           
-          {/* Section 1: Connection String */}
+          {/* Section 1: Connection String (URI) */}
           {activeTab === 'uri' && (
             <div className="space-y-4">
               <div className="bg-sky-500/10 border border-sky-500/20 rounded-lg p-4 flex items-start gap-3">
-                <ShieldCheck className="text-sky-400 shrink-0 mt-0.5" size={18} />
+                <ShieldCheck size={18} className="text-sky-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-bold text-white">Security Notice</h4>
+                  <h4 className="text-sm font-bold text-white">Warning: API Key</h4>
                   <p className="text-xs text-textMuted mt-1 leading-relaxed">
-                    This connection string includes your credentials. Do not share it publicly. 
-                    Ensure your IP address is whitelisted in Network Access.
+                    The password in this string is your **Unique User ID (UUID)**, which acts as your secret API Key. Do not share it publicly.
                   </p>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-2 block">
-                  Connection String (Standard SRV)
-                </label>
+                <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-2 block">Connection String (wanzdb SRV)</label>
                 <div className="relative group">
-                  <div className="bg-[#050505] border border-white/10 rounded-lg p-4 font-mono text-sm text-textMuted break-all pr-24">
+                  <div className="bg-[#050505] border border-border rounded-lg p-4 font-mono text-sm text-textMuted break-all pr-24 select-all">
                     <span className="text-sky-400">wanzdb://</span>
                     <span className="text-white">{username}</span>:
                     <span className={showPassword ? "text-yellow-400" : "text-textMuted"}>
-                      {showPassword ? dbPassword : "••••••••"}
+                      {showPassword ? apiKey : "••••••••••••••••••••••••••••••••••••••••••••••••••"}
                     </span>
                     <span className="text-white">@{host}/</span>
-                    <span className="text-emerald-400">?retryWrites=true&w=majority</span>
+                    <span className="text-emerald-400">?w=majority</span>
                   </div>
                   
                   {/* Action Buttons */}
@@ -120,12 +91,12 @@ run();`;
                     <button 
                       onClick={() => setShowPassword(!showPassword)}
                       className="p-2 hover:bg-white/10 rounded text-textMuted hover:text-white transition"
-                      title={showPassword ? "Hide Password" : "Show Password"}
+                      title={showPassword ? "Hide Key" : "Show Key"}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                     <button 
-                      onClick={() => handleCopy(connectionString.replace('<password>', dbPassword), 'uri')}
+                      onClick={() => handleCopy(realConnectionString, 'uri')}
                       className="p-2 hover:bg-white/10 rounded text-textMuted hover:text-white transition"
                       title="Copy Connection String"
                     >
@@ -134,48 +105,31 @@ run();`;
                   </div>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                   <label className="text-xs text-textMuted">Username</label>
-                   <div className="mt-1 p-2 bg-surface border border-white/5 rounded text-sm text-white font-mono">{username}</div>
-                </div>
-                <div>
-                   <label className="text-xs text-textMuted">Database Name</label>
-                   <div className="mt-1 p-2 bg-surface border border-white/5 rounded text-sm text-white font-mono">wanzdb_production</div>
-                </div>
-              </div>
             </div>
           )}
 
           {/* Section 2: Code Snippet */}
           {activeTab === 'code' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-textMuted uppercase tracking-wider">
-                  index.js
-                </label>
-                <button 
-                  onClick={() => handleCopy(codeSnippet, 'code')}
-                  className="flex items-center gap-2 text-xs font-medium text-sky-400 hover:text-sky-300 transition"
-                >
-                  {copiedField === 'code' ? <Check size={14} /> : <Copy size={14} />}
-                  {copiedField === 'code' ? 'Copied!' : 'Copy Code'}
-                </button>
-              </div>
-              
-              <div className="bg-[#050505] border border-white/10 rounded-lg p-4 font-mono text-sm overflow-x-auto relative custom-scrollbar">
-                 <pre>
-                  <code className="language-javascript text-gray-300">
-                    {codeSnippet.split('\n').map((line, i) => (
-                      <div key={i} className="table-row">
-                        <span className="table-cell text-right pr-4 text-white/10 select-none">{i + 1}</span>
-                        <span className="table-cell">{line}</span>
-                      </div>
-                    ))}
-                  </code>
-                 </pre>
-              </div>
+               {/* Language Tabs */}
+               <div className="flex gap-2 mb-2">
+                  {['node', 'python', 'php'].map(lang => (
+                     <button 
+                        key={lang}
+                        onClick={() => setLangTab(lang)}
+                        className={`px-3 py-1 text-xs uppercase font-bold rounded border ${langTab === lang ? 'bg-sky-500 text-white border-sky-500' : 'bg-transparent text-textMuted border-border hover:border-textMuted'}`}
+                     >
+                        {lang}
+                     </button>
+                  ))}
+               </div>
+
+               <div className="bg-[#050505] border border-border rounded-lg p-4 font-mono text-sm overflow-x-auto relative">
+                 <button onClick={() => handleCopy(snippets[langTab], 'code')} className="absolute top-2 right-2 p-2 hover:bg-white/10 rounded text-textMuted">
+                    {copiedField === 'code' ? <Check size={14} className="text-emerald-400"/> : <Copy size={14}/>}
+                 </button>
+                 <pre><code className="text-sky-300">{snippets[langTab]}</code></pre>
+               </div>
             </div>
           )}
         </div>
@@ -183,8 +137,8 @@ run();`;
         {/* Footer */}
         <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-surface/30">
           <Button variant="secondary" onClick={onClose}>Close</Button>
-          <Button variant="primary" onClick={() => handleCopy(connectionString.replace('<password>', dbPassword), 'btn')}>
-             {copiedField === 'btn' ? 'Copied to Clipboard' : 'Copy Connection String'}
+          <Button variant="primary" onClick={() => handleCopy(realConnectionString, 'btn')}>
+             {copiedField === 'btn' ? 'Copied Full String!' : 'Copy Full String'}
           </Button>
         </div>
       </Card>
