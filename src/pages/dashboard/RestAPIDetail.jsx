@@ -8,7 +8,7 @@ import Input from '../../components/ui/Input';
 import { useToast } from '../../hooks/useToast';
 
 // URL Endpoint
-const API_URL_DEV = 'https://dbw-nu.vercel.app/api/developer';
+const API_URL_DEV_PUBLIC = 'https://dbw-nu.vercel.app/api/developer/public';
 const AI_ENDPOINT = 'https://ai.wanzofc.site/v1/chat/completions';
 const API_KEY = '<YOUR_UUID_API_KEY>'; // Placeholder
 
@@ -61,7 +61,7 @@ export default function RestAPIDetail() {
     const { showToast } = useToast();
     const location = useLocation(); 
     
-    // 🔥 PERBAIKAN: Ambil dan decode sisa path
+    // 🔥 PERBAIKAN: Ambil dan decode sisa path (untuk nama model yang mengandung / dan :)
     const pathSegment = location.pathname.split('/dashboard/rest-api/')[1];
     const modelName = pathSegment ? decodeURIComponent(pathSegment) : null; 
     
@@ -76,8 +76,8 @@ export default function RestAPIDetail() {
         const fetchModelDocs = async () => {
             if (!modelName) { setLoading(false); return; }
             try {
-                // Panggil endpoint di backend (menggunakan modelName yang sudah di-decode)
-                const res = await fetch(`${API_URL_DEV}/public/ai-model/${modelName}`);
+                // Panggil endpoint publik yang baru
+                const res = await fetch(`${API_URL_DEV_PUBLIC}/ai-model/${modelName}`);
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.msg || "Model not found");
                 setModelData(data);
