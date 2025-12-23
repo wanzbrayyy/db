@@ -26,7 +26,8 @@ const fetchApi = async (url, options = {}) => {
     return data;
 };
 
-// --- UI: MODAL ADD/EDIT AI MODEL (DIPISAHKAN) ---
+
+// --- UI: MODAL ADD/EDIT AI MODEL ---
 function AiModelModal({ isOpen, onClose, onSave }) {
     if (!isOpen) return null;
     const [formData, setFormData] = useState({ modelName: 'nex-agi/deepseek-v3.1-nex-n1:free', version: 'v3.1', context: 131072, description: 'Model untuk coding, tool use, dan produktivitas.', apiKey: 'sk-or-v1-...' });
@@ -80,6 +81,7 @@ function AiModelModal({ isOpen, onClose, onSave }) {
         </div>
     );
 }
+// --- AKHIR MODAL ---
 
 
 export default function Developer() {
@@ -150,6 +152,23 @@ export default function Developer() {
           alert("Gagal menghapus: " + e.message);
       }
   };
+  
+  // LOGIC BARU: Toggle Publish/Private
+  const handleModelToggle = async (modelId, currentState) => {
+      try {
+          const updatedModel = await fetchApi(`${API_URL_ADMIN}/ai-models/${modelId}`, {
+              method: 'PUT',
+              body: JSON.stringify({ isPublic: !currentState })
+          });
+          
+          setModels(prev => prev.map(m => 
+              m._id === modelId ? { ...m, isPublic: updatedModel.isPublic } : m
+          ));
+          alert(`Model ${updatedModel.modelName} berhasil di-toggle ke ${updatedModel.isPublic ? 'PUBLIK' : 'PRIVATE'}`);
+      } catch (e) {
+          alert("Gagal mengubah status: " + e.message);
+      }
+  };
 
 
   return (
@@ -209,10 +228,20 @@ export default function Developer() {
                           <p className="text-xs text-gray-500 mt-1">Versi: {model.version} | Context: {model.context}K</p>
                           <p className="text-sm text-gray-300 mt-3">{model.description}</p>
                           <div className="mt-4 border-t border-white/5 pt-3 flex justify-between items-center">
-                              <span className="text-xs text-yellow-400 flex items-center gap-1"><Zap size={12}/> {model.isPublic ? 'Publik' : 'Private'}</span>
-                              <Link to={`/dashboard/rest-api/${model.modelName}`}>
-                                <Button size="sm" variant="secondary" className="bg-white/5 hover:bg-white/10">Lihat Docs</Button>
-                              </Link>
+                              {/* STATUS PUBLIC/PRIVATE */}
+                              <span className="flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full ${model.isPublic ? 'bg-emerald-500' : 'bg-yellow-500'}`}></span>
+                                  <span className="text-xs text-textMuted">{model.isPublic ? 'PUBLIC' : 'PRIVATE'}</span>
+                              </span>
+                              
+                              <div className="flex gap-2">
+                                  <button onClick={() => handleModelToggle(model._id, model.isPublic)} className="text-sm text-sky-400 hover:text-white transition">
+                                     {model.isPublic ? 'Set Private' : 'Set Public'}
+                                  </button>
+                                  <Link to={`/dashboard/rest-api/${model.modelName}`}>
+                                    <Button size="sm" variant="secondary" className="bg-white/5 hover:bg-white/10">Lihat Docs</Button>
+                                  </Link>
+                              </div>
                           </div>
                       </Card>
                   ))}

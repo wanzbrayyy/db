@@ -4,6 +4,7 @@ import { Key, Copy, Trash2, Plus, Zap, Code, Terminal, Sliders, X, AlertTriangle
 import Card, { CardHeader, CardTitle } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { Link } from 'react-router-dom';
 
 // API Endpoints
 const API_URL_ADMIN = 'https://dbw-nu.vercel.app/api/admin'; 
@@ -25,8 +26,7 @@ const fetchApi = async (url, options = {}) => {
     return data;
 };
 
-
-// --- UI: MODAL ADD/EDIT AI MODEL (Hanya untuk Admin) ---
+// --- UI: MODAL ADD/EDIT AI MODEL (DIPISAHKAN) ---
 function AiModelModal({ isOpen, onClose, onSave }) {
     if (!isOpen) return null;
     const [formData, setFormData] = useState({ modelName: 'nex-agi/deepseek-v3.1-nex-n1:free', version: 'v3.1', context: 131072, description: 'Model untuk coding, tool use, dan produktivitas.', apiKey: 'sk-or-v1-...' });
@@ -40,6 +40,7 @@ function AiModelModal({ isOpen, onClose, onSave }) {
         e.preventDefault();
         setLoading(true);
         try {
+            // POST ke API Admin
             const data = await fetchApi(`${API_URL_ADMIN}/ai-models`, { 
                 method: 'POST',
                 body: JSON.stringify(formData)
@@ -79,7 +80,6 @@ function AiModelModal({ isOpen, onClose, onSave }) {
         </div>
     );
 }
-// --- AKHIR MODAL ---
 
 
 export default function Developer() {
@@ -99,6 +99,7 @@ export default function Developer() {
     if (activeTab !== 'models' || !isAdmin) return;
     const fetchModels = async () => {
         try {
+            // GET dari API Admin
             const data = await fetchApi(`${API_URL_ADMIN}/ai-models`);
             setModels(data);
         } catch (e) {
@@ -142,6 +143,7 @@ export default function Developer() {
   const handleModelDelete = async (id) => {
       if(!confirm("Yakin hapus model ini?")) return;
       try {
+          // DELETE ke API Admin
           await fetchApi(`${API_URL_ADMIN}/ai-models/${id}`, { method: 'DELETE' });
           setModels(prev => prev.filter(m => m._id !== id));
       } catch (e) {
@@ -208,7 +210,9 @@ export default function Developer() {
                           <p className="text-sm text-gray-300 mt-3">{model.description}</p>
                           <div className="mt-4 border-t border-white/5 pt-3 flex justify-between items-center">
                               <span className="text-xs text-yellow-400 flex items-center gap-1"><Zap size={12}/> {model.isPublic ? 'Publik' : 'Private'}</span>
-                              <Button size="sm" variant="secondary" className="bg-white/5 hover:bg-white/10">Lihat Docs</Button>
+                              <Link to={`/dashboard/rest-api/${model.modelName}`}>
+                                <Button size="sm" variant="secondary" className="bg-white/5 hover:bg-white/10">Lihat Docs</Button>
+                              </Link>
                           </div>
                       </Card>
                   ))}
