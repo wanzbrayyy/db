@@ -4,11 +4,9 @@ import Card from '../components/ui/Card';
 
 // Helper untuk menyembunyikan logika pewarnaan dari parser JSX
 const getHighlightedCode = (code) => {
-    // Ini adalah cara aman untuk melakukan Syntax Highlighting Sederhana
-    // Menggunakan regex untuk mewarnai keyword dan string
+    // Menggunakan regex untuk pewarnaan sederhana
     code = code.replace(/await|const|import|from|new|return|try|catch|function|export|class|this|if|else/g, '<span style="color: #c678dd;">$&</span>'); // Purple Keywords
     code = code.replace(/"(.*?)"/g, '<span style="color: #98c379;">$&</span>'); // Green Strings
-    code = code.replace(/\b(db|client|users|error|doc)\b/g, '<span style="color: #61afef;">$&</span>'); // Blue Variables
     code = code.replace(/\/\/.*/g, '<span style="color: #5c6370;">$&</span>'); // Gray Comments
     code = code.replace(/([a-zA-Z0-9_]+)\./g, '<span style="color: #e5c07b;">$&</span>'); // Yellow Methods
     return code;
@@ -22,7 +20,7 @@ export default function Docs() {
     { title: 'SDK Reference', items: ['JavaScript SDK', 'Error Handling'] },
   ];
 
-  // KOMPONEN CODE BLOCK BARU (Menggunakan dangerouslySetInnerHTML)
+  // KOMPONEN CODE BLOCK
   const CodeBlock = ({ language, children }) => {
     const highlightedCode = getHighlightedCode(children);
     return (
@@ -98,10 +96,11 @@ export default function Docs() {
         </h3>
         <p className="text-gray-400 mb-4">Autentikasi menggunakan Connection String standar, di mana **Password** Anda adalah **Unique User ID (UUID)** yang berfungsi sebagai **API Key** rahasia. Ini menghilangkan kebutuhan untuk mengirim password asli (bcrypt hash) melalui API, meningkatkan keamanan.</p>
         <CodeBlock language="javascript">
+          {/* SINTAKS DI BAWAH SUDAH DIPERBAIKI */}
           const {'{ Client }'} = require('wanzdb');
 
           // Format: wanzdb://<USERNAME>:<UUID_KEY>@dbw-nu.vercel.app
-          const db = new Client("wanzdb://{'<USERNAME>'}:{'<UUID_KEY>'}@dbw-nu.vercel.app");
+          const db = new Client("wanzdb://<USERNAME>:<UUID_KEY>@dbw-nu.vercel.app");
           
           await db.connect();
         </CodeBlock>
@@ -118,13 +117,13 @@ export default function Docs() {
           const users = client.collection('users');
           
           // INSERT: Auto generates 50-char ID
-          const newUser = await users.insert({'{} email: "ali@wanz.dev" {}'});
+          const newUser = await users.insert({ email: "ali@wanz.dev" });
           
           // FIND: Ambil semua
           const allUsers = await users.find({});
           
           // UPDATE: Update by ID
-          await users.update(newUser._id, {'{} status: "active" {}'});
+          const updated = await users.update(newUser._id, { status: "active" });
         </CodeBlock>
         
         <h3 id="trash-bin-restore" className="text-2xl font-bold text-white mt-8 mb-4">Trash Bin & Restore</h3>
@@ -142,7 +141,7 @@ export default function Docs() {
         <CodeBlock language="javascript">
           const users = client.collection('users');
           const seniorUsers = await users.find({
-            age: { gt: 20 },
+            age: { gt: 20 }, // gt: greater than
             role: "admin"
           }, { sort: "-age", limit: 10 });
         </CodeBlock>
@@ -173,7 +172,7 @@ export default function Docs() {
             await client.connect();
             
             const users = client.collection('users');
-            const doc = await users.findOne({'{} email: "test@example.com" {}'});
+            const doc = await users.findOne({ email: "test@example.com" });
 
             return doc;
           {'}'}
@@ -183,7 +182,7 @@ export default function Docs() {
         <p className="text-gray-400 mb-4">Semua method SDK mengembalikan Promise. Anda harus menggunakan blok try...catch untuk menangani kegagalan jaringan, validasi, atau otentikasi.</p>
         <CodeBlock language="javascript">
           try {'{'}
-            await client.collection('protected').insert({'{} data: true {'}'});
+            await client.collection('protected').insert({ data: true });
           {'}'} catch (error) {'{'}
             console.error(`Error Code: ${error.message}`);
           {'}'}
