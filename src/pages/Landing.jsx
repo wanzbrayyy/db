@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Terminal, Globe, Zap, ShieldCheck, LayoutGrid, Cpu } from 'lucide-react';
+import { ArrowRight, Terminal, Globe, Zap, ShieldCheck, Database, LayoutGrid, Cpu } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { generateNanoId } from '../utils/uuid';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion'; <-- DIHAPUS
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -11,23 +11,10 @@ export default function Landing() {
     navigate(`/login/auth-${generateNanoId(8)}`);
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
+  // Hapus semua variants dan initial/animate
 
   return (
-    <motion.div 
-      initial="hidden" 
-      animate="visible" 
-      variants={containerVariants} 
-      className="relative isolate overflow-hidden bg-background"
-    >
+    <div className="relative isolate overflow-hidden bg-background">
       
       {/* --- BACKGROUND EFFECTS --- */}
       <div className="absolute top-0 -left-4 w-96 h-96 bg-sky-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-10 animate-blob"></div>
@@ -37,67 +24,67 @@ export default function Landing() {
       <div className="relative pt-24 pb-20 lg:pt-36 lg:pb-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
           
-          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-xs font-medium text-white mb-8 hover:bg-white/10 transition cursor-default">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
-            </span>
-            <span>v2.4 sekarang tersedia dalam beta publik</span>
-          </motion.div>
+          {/* CONTENT TANPA ANIMASI MOTION */}
+          <div>
 
-          <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tight text-white font-sans mb-8 leading-tight">
-            basis data untuk <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">
-              aplikasi modern
-            </span>
-          </motion.h1>
-          
-          <motion.p variants={itemVariants} className="text-lg md:text-xl text-textMuted leading-relaxed max-w-3xl mx-auto mb-12">
-            rasakan kecepatan penyimpanan data dalam memori dengan ketahanan basis data dokumen. dibangun untuk pengembang yang ingin mengirimkan aplikasi dengan cepat. arsitektur serverless kami menangani semua kompleksitas infrastruktur.
-          </motion.p>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-xs font-medium text-white mb-8 hover:bg-white/10 transition cursor-default">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+              </span>
+              <span>v2.4 sekarang tersedia dalam beta publik</span>
+            </div>
 
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg" variant="primary" className="w-full sm:w-auto font-bold h-12 px-8">
-                mulai buat gratis
-              </Button>
-            </Link>
-            <button 
-              onClick={handleSmartLogin} 
-              className="w-full sm:w-auto h-12 px-8 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white font-medium transition hover:border-sky-500/30 flex items-center justify-center gap-2"
-            >
-              <Terminal size={18} /> buka konsol
-            </button>
-          </motion.div>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white font-sans mb-8 leading-tight">
+              basis data untuk <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">
+                aplikasi masa depan
+              </span>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-textMuted leading-relaxed max-w-3xl mx-auto mb-12">
+              wanzdb dirancang dari nol untuk penyimpanan data dengan latensi nol dan ketersediaan tinggi. kami menyediakan api dokumen yang kuat dan familiar yang memungkinkan anda berfokus secara eksklusif pada pembangunan fitur, bukan mengelola kluster kubernetes yang kompleks. sebarkan skema anda secara instan dan tingkatkan skala hingga jutaan permintaan tanpa hambatan.
+            </p>
 
-          {/* Code Preview */}
-          <motion.div variants={itemVariants} className="mt-20 mx-auto max-w-4xl transform hover:scale-[1.01] transition duration-500">
-            <div className="rounded-xl bg-[#0a0a0a] border border-white/10 shadow-2xl overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-white/[0.02]">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/20"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/20"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500/20"></div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/register">
+                <Button size="lg" variant="primary" className="w-full sm:w-auto font-bold h-12 px-8">
+                  mulai buat gratis
+                </Button>
+              </Link>
+              <button 
+                onClick={handleSmartLogin} 
+                className="w-full sm:w-auto h-12 px-8 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white font-medium transition hover:border-sky-500/30 flex items-center justify-center gap-2"
+              >
+                <Terminal size={18} /> buka konsol
+              </button>
+            </div>
+
+            {/* Code Preview */}
+            <div className="mt-20 mx-auto max-w-4xl transform hover:scale-[1.01] transition duration-500">
+              <div className="rounded-xl bg-[#0a0a0a] border border-white/10 shadow-2xl overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-white/[0.02]">
+                  <div className="flex gap-2"><div className="w-3 h-3 rounded-full bg-red-500/20"></div><div className="w-3 h-3 rounded-full bg-yellow-500/20"></div><div className="w-3 h-3 rounded-full bg-green-500/20"></div></div>
+                  <div className="mx-auto text-xs text-textMuted font-mono">wanzdb-klien.js</div>
                 </div>
-                <div className="mx-auto text-xs text-textMuted font-mono">wanzdb-klien.js</div>
-              </div>
-              <div className="p-6 md:p-8 text-left font-mono text-sm overflow-x-auto">
-                 <pre>
-                  <code className="language-javascript">
-                    {`const { client } = require('wanzdb');
+                <div className="p-6 md:p-8 text-left font-mono text-sm overflow-x-auto">
+                   <pre>
+                    <code className="language-javascript">
+                      {`const { client } = require('wanzdb');
 
-                    // hubungkan secara aman
-                    const db = new client("wanzdb://user:kunci-api@host");
-                    await db.connect();
+                      // hubungkan secara aman
+                      const db = new client("wanzdb://user:kunci-api@host");
+                      await db.connect();
 
-                    // lakukan kueri terindeks
-                    const hasil = await db.koleksi('pesanan').cari({status: 'aktif'});
-                    console.log(\`ditemukan \${hasil.length} catatan.\`);`}
-                  </code>
-                 </pre>
+                      // lakukan kueri terindeks yang cepat
+                      const hasil = await db.koleksi('pesanan').cari({status: 'aktif'});
+                      console.log(\`ditemukan \${hasil.length} catatan.\`);`}
+                    </code>
+                   </pre>
+                </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -112,7 +99,7 @@ export default function Landing() {
             <p className="mt-4 text-gray-400">kami menawarkan seperangkat alat yang kuat dan jaminan arsitektur yang memastikan aplikasi anda tetap cepat, aman, dan dapat ditingkatkan skalanya tanpa batas sejak baris kode pertama hingga jutaan pengguna.</p>
           </div>
 
-          <motion.div initial="hidden" animate="visible" variants={containerVariants} className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 title: 'arsitektur tepi global',
@@ -133,9 +120,8 @@ export default function Landing() {
                 color: 'text-emerald-400'
               },
             ].map((feature) => (
-              <motion.div 
+              <div 
                 key={feature.title} 
-                variants={itemVariants}
                 className="group p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-sky-500/30 hover:bg-white/[0.08] transition duration-300"
               >
                 <div className={`w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center mb-6 ${feature.color}`}>
@@ -143,9 +129,9 @@ export default function Landing() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
                 <p className="text-textMuted leading-relaxed text-sm">{feature.desc}</p>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -190,6 +176,6 @@ export default function Landing() {
            </p>
         </div>
       </footer>
-    </motion.div>
+    </div>
   );
 }
