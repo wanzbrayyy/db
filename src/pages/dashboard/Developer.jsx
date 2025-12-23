@@ -40,7 +40,6 @@ function AiModelModal({ isOpen, onClose, onSave }) {
         e.preventDefault();
         setLoading(true);
         try {
-            // POST ke API Admin
             const data = await fetchApi(`${API_URL_ADMIN}/ai-models`, { 
                 method: 'POST',
                 body: JSON.stringify(formData)
@@ -86,8 +85,8 @@ function AiModelModal({ isOpen, onClose, onSave }) {
 export default function Developer() {
   const { user } = useAuth();
   
-  // LOGIC BARU: Jika admin, default tab 'models', jika bukan, default 'api'
-  const defaultTab = user?.role === 'admin' ? 'models' : 'api';
+  const isAdmin = user?.role === 'admin';
+  const defaultTab = isAdmin ? 'models' : 'api';
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   const [isSandbox, setIsSandbox] = useState(false);
@@ -97,10 +96,9 @@ export default function Developer() {
 
   // Fetch AI Models (Hanya jika Admin)
   useEffect(() => {
-    if (activeTab !== 'models' || user?.role !== 'admin') return;
+    if (activeTab !== 'models' || !isAdmin) return;
     const fetchModels = async () => {
         try {
-            // GET dari API Admin
             const data = await fetchApi(`${API_URL_ADMIN}/ai-models`);
             setModels(data);
         } catch (e) {
@@ -108,7 +106,7 @@ export default function Developer() {
         }
     };
     fetchModels();
-  }, [activeTab, user?.role]);
+  }, [activeTab, isAdmin]);
   
   // Fetch Logs (Simulasi Realtime)
   useEffect(() => {
@@ -144,7 +142,6 @@ export default function Developer() {
   const handleModelDelete = async (id) => {
       if(!confirm("Yakin hapus model ini?")) return;
       try {
-          // DELETE ke API Admin
           await fetchApi(`${API_URL_ADMIN}/ai-models/${id}`, { method: 'DELETE' });
           setModels(prev => prev.filter(m => m._id !== id));
       } catch (e) {
@@ -174,7 +171,7 @@ export default function Developer() {
       {/* Tabs */}
       <div className="flex border-b border-border">
         {/* TAMPILKAN TAB AI MODELS HANYA JIKA ADMIN */}
-        {user?.role === 'admin' && ( 
+        {isAdmin && ( 
             <button
                 onClick={() => setActiveTab('models')}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition ${activeTab === 'models' ? 'border-sky-500 text-sky-400' : 'border-transparent text-textMuted hover:text-textMain'}`}
@@ -194,7 +191,7 @@ export default function Developer() {
       </div>
 
       {/* --- TAB CONTENT: AI MODELS (HANYA ADMIN) --- */}
-      {activeTab === 'models' && user?.role === 'admin' && (
+      {activeTab === 'models' && isAdmin && (
           <div className="space-y-4">
               <div className="flex justify-between items-center">
                   <p className="text-sm text-textMuted">Kelola model-model AI pihak ketiga yang terintegrasi (OpenRouter).</p>
