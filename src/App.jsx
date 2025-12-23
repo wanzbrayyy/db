@@ -26,7 +26,7 @@ import Playground from './pages/dashboard/Playground';
 import Developer from './pages/dashboard/Developer';
 import Trash from './pages/dashboard/Trash';
 import Upgrade from './pages/dashboard/Upgrade';
-import RestAPI from './pages/dashboard/RestAPI'; // Import Halaman REST API
+import RestAPI from './pages/dashboard/RestAPI'; 
 
 function App() {
   return (
@@ -60,7 +60,10 @@ function App() {
                 {/* Developer Tools */}
                 <Route path="developer" element={<Developer />} />
                 <Route path="playground" element={<Playground />} />
-                <Route path="rest-api" element={<RestAPI />} /> {/* Route REST API */}
+                
+                {/* 🔥 PERBAIKAN: Gunakan '*' untuk menangkap seluruh nama model, termasuk '/' dan ':' */}
+                <Route path="rest-api/:modelName/*" element={<RestAPI />} /> 
+                <Route path="rest-api" element={<RestAPI />} /> 
                 
                 {/* Upgrade */}
                 <Route path="upgrade" element={<Upgrade />} />
