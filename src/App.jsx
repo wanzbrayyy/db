@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './hooks/useToast'; // Import Toast Provider
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -24,51 +25,53 @@ import CollectionDetail from './pages/dashboard/CollectionDetail';
 import Playground from './pages/dashboard/Playground';
 import Developer from './pages/dashboard/Developer';
 import Trash from './pages/dashboard/Trash';
-import Upgrade from './pages/dashboard/Upgrade'; // Halaman Baru
+import Upgrade from './pages/dashboard/Upgrade';
 
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route element={<MainLayout />}>
-              <Route path="/" element={<Landing />} />
-              <Route path="/docs" element={<Docs />} />
-              
-              {/* Auth */}
-              <Route path="/login/:sessionId" element={<Login />} />
-              <Route path="/login" element={<Navigate to={`/login/auth-${Date.now()}`} replace />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/verify-2fa" element={<Verify2FA />} />
-            </Route>
+      <ToastProvider> {/* WRAP SELURUH APLIKASI DENGAN TOAST PROVIDER */}
+        <AuthProvider>
+          <Router>
+            <Routes>
+              {/* Public Routes */}
+              <Route element={<MainLayout />}>
+                <Route path="/" element={<Landing />} />
+                <Route path="/docs" element={<Docs />} />
+                
+                {/* Auth */}
+                <Route path="/login/:sessionId" element={<Login />} />
+                <Route path="/login" element={<Navigate to={`/login/auth-${Date.now()}`} replace />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/verify-2fa" element={<Verify2FA />} />
+              </Route>
 
-            {/* Protected Dashboard Routes */}
-            <Route path="/dashboard" element={<AppLayout />}>
-              <Route index element={<Overview />} />
-              <Route path="profile" element={<Profile />} />
-              
-              {/* Data Management */}
-              <Route path="collections" element={<Collections />} />
-              <Route path="collections/:name" element={<CollectionDetail />} />
-              <Route path="trash" element={<Trash />} /> 
-              
-              {/* Developer Tools */}
-              <Route path="developer" element={<Developer />} />
-              <Route path="playground" element={<Playground />} />
-              
-              {/* Upgrade */}
-              <Route path="upgrade" element={<Upgrade />} /> {/* Route Baru */}
-            </Route>
+              {/* Protected Dashboard Routes */}
+              <Route path="/dashboard" element={<AppLayout />}>
+                <Route index element={<Overview />} />
+                <Route path="profile" element={<Profile />} />
+                
+                {/* Data Management */}
+                <Route path="collections" element={<Collections />} />
+                <Route path="collections/:name" element={<CollectionDetail />} />
+                <Route path="trash" element={<Trash />} /> 
+                
+                {/* Developer Tools */}
+                <Route path="developer" element={<Developer />} />
+                <Route path="playground" element={<Playground />} />
+                
+                {/* Upgrade */}
+                <Route path="upgrade" element={<Upgrade />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-        
-        <Analytics />
-        <SpeedInsights />
-      </AuthProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Router>
+          
+          <Analytics />
+          <SpeedInsights />
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

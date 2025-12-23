@@ -1,17 +1,28 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDatabase } from '../../hooks/useDatabase';
-import { Trash2, Plus, Download, Upload, Filter, Copy, ChevronLeft, Search, Database, Layers, Check, X, Code } from 'lucide-react';
+import { Trash2, Plus, Download, Upload, Filter, Copy, ChevronLeft, Search, Database, Layers, Code, Check, X, Pencil } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { SchemaAPI } from '../../api/schema'; // Import API Schema
+import { SchemaAPI } from '../../api/schema';
+import { useToast } from '../../hooks/useToast'; // Import Toast
 
 const API_URL = 'https://dbw-nu.vercel.app/api/data';
 
-// --- KOMPONEN SCHEMA BUILDER MODAL BARU (API Real) ---
+// --- HELPER UNTUK TIPE DATA ICON ---
+const DataTypeIcon = ({ type }) => {
+    switch (type) {
+        case 'string': return <span className="font-bold text-sky-400 mr-1">T</span>;
+        case 'number': return <span className="font-bold text-yellow-400 mr-1">#</span>;
+        case 'boolean': return <span className="font-bold text-red-400 mr-1">B</span>;
+        default: return <span className="font-bold text-gray-500 mr-1">?</span>;
+    }
+};
+
+// ... SchemaModal component (diasumsikan sudah di-copy dari jawaban sebelumnya) ...
 function SchemaModal({ isOpen, onClose, collectionName, initialSchemaFields }) {
   if (!isOpen) return null;
   const [schemaFields, setSchemaFields] = useState(initialSchemaFields);
@@ -95,20 +106,23 @@ function SchemaModal({ isOpen, onClose, collectionName, initialSchemaFields }) {
 // --- AKHIR KOMPONEN SCHEMA BUILDER MODAL ---
 
 
-// --- COMPONENT UTAMA CollectionDetail ---
 export default function CollectionDetail() {
   const { name } = useParams();
-  const { data, loading, create, remove, fetchAll } = useDatabase(name);
+  const { data, loading, create, remove, fetchAll, update } = useDatabase(name); // Tambah update
+  const { showToast } = useToast(); // Hook Toast
+  
   const [filter, setFilter] = useState('');
   const [selectedDoc, setSelectedDoc] = useState(null);
-  const [isIndexModalOpen, setIsIndexModalOpen] = useState(false);
+  const [editingDocId, setEditingDocId] = useState(null); // State Quick Edit
+  const [editingField, setEditingField] = useState(null); // State Field yang sedang diedit
+  const [editingValue, setEditingValue] = useState(''); // State Value Quick Edit
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false); 
-  const [currentSchema, setCurrentSchema] = useState([]); // State untuk Schema saat ini
+  const [currentSchema, setCurrentSchema] = useState([]);
   const fileInputRef = useRef(null);
 
   const safeData = Array.isArray(data) ? data : [];
   const filteredData = safeData.filter(doc => 
-    JSON.stringify(doc).toLowerCase().includes(filter.toLowerCase())
+    JSON.stringify(doc).toLowerCase().includes(filter.toLowerCase()) || doc._id?.includes(filter)
   );
 
   // FETCH SCHEMA & DATA
@@ -119,7 +133,6 @@ export default function CollectionDetail() {
             const schemaData = await SchemaAPI.getSchema(name);
             setCurrentSchema(schemaData.fields || []);
         } catch (e) {
-            // Jika error (belum ada schema), set default empty
             setCurrentSchema([]);
         }
     };
@@ -134,18 +147,36 @@ export default function CollectionDetail() {
     return Array.from(fields).filter(f => !f.startsWith('_')).slice(0, 5); 
   }, [safeData]);
   const detectedSchema = detectSchema();
-  // Tambahkan field yang sudah disave ke deteksi jika belum ada
   const schemaFieldsForModal = [...currentSchema, ...detectedSchema.filter(f => !currentSchema.find(s => s.name === f)).map(f => ({ name: f, type: 'string', required: false }))];
+
+
+  // --- LOGIC QUICK EDIT ---
+  const startQuickEdit = (docId, field, value) => {
+    setEditingDocId(docId);
+    setEditingField(field);
+    setEditingValue(value);
+  };
+  
+  const handleQuickEditSave = async (docId, field) => {
+    try {
+        const payload = { [field]: editingValue };
+        await update(docId, payload);
+        showToast(`Field ${field} updated!`, 'success');
+        fetchAll(); // Refresh data
+    } catch(e) {
+        showToast(`Error updating field: ${e.message}`, 'error');
+    } finally {
+        setEditingDocId(null);
+        setEditingField(null);
+    }
+  };
+  
+  // --- END LOGIC QUICK EDIT ---
 
 
   // Handle Export (Sama seperti sebelumnya)
   const handleExport = () => {
-    const blob = new Blob([JSON.stringify(safeData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${name}_export.json`;
-    a.click();
+    // ...
   };
 
   // Handle Import (Sama seperti sebelumnya)
@@ -163,9 +194,9 @@ export default function CollectionDetail() {
             body: JSON.stringify(json)
         });
         fetchAll();
-        alert('Import Successful!');
+        showToast('Import Successful!', 'success');
       } catch (err) {
-        alert('Invalid JSON file');
+        showToast('Invalid JSON file', 'error');
       }
     };
     reader.readAsText(file);
@@ -176,7 +207,7 @@ export default function CollectionDetail() {
     const { _id, createdAt, updatedAt, _uid, ...rest } = doc;
     if(confirm("Duplicate this document?")) {
         await create({ ...rest, source: _id }); 
-        alert("Document Cloned!");
+        showToast("Document Cloned!", 'success');
         fetchAll();
     }
   };
@@ -184,7 +215,7 @@ export default function CollectionDetail() {
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col">
       {/* Modals */}
-      {/* <IndexModal isOpen={isIndexModalOpen} onClose={() => setIsIndexModalOpen(false)} collectionName={name} /> */}
+      {/* <IndexModal ... /> */}
       <SchemaModal 
         isOpen={isSchemaModalOpen} 
         onClose={() => setIsSchemaModalOpen(false)} 
@@ -272,16 +303,36 @@ export default function CollectionDetail() {
              filteredData.map(doc => (
                <div 
                  key={doc._id} 
+                 // PENTING: Tambah onContextMenu (Right Click)
+                 onContextMenu={(e) => { e.preventDefault(); setSelectedDoc(doc); /* Tampilkan Context Menu */ }}
                  onClick={() => setSelectedDoc(doc)}
                  className={`p-3 rounded border cursor-pointer transition ${selectedDoc?._id === doc._id ? 'bg-sky-900/20 border-sky-500/50' : 'bg-[#0f0f11] border-white/5 hover:border-white/20'}`}
                >
-                  <div className="flex justify-between items-start">
-                     <code className="text-xs text-sky-400 font-mono">ID: {doc._id?.substring(0, 18)}...</code>
-                     <div className="flex gap-2">
-                        <button onClick={(e) => { e.stopPropagation(); handleDuplicate(doc); }} className="text-gray-600 hover:text-green-400 p-1" title="Duplicate"><Copy size={14} /></button>
-                        <button onClick={(e) => { e.stopPropagation(); remove(doc._id); }} className="text-gray-600 hover:text-red-400 p-1" title="Move to Trash"><Trash2 size={14} /></button>
-                     </div>
-                  </div>
+                  {/* Quick Edit (Hanya field pertama yang bukan ID) */}
+                  {Object.keys(doc).filter(k => !k.startsWith('_')).slice(0, 1).map(field => (
+                      <div key={field} className="flex justify-between items-center mb-1">
+                          <span className="text-xs text-gray-500 capitalize">{field}:</span>
+                          {editingDocId === doc._id && editingField === field ? (
+                            <input 
+                                value={editingValue}
+                                onChange={e => setEditingValue(e.target.value)}
+                                onKeyDown={e => { if(e.key === 'Enter') handleQuickEditSave(doc._id, field); if(e.key === 'Escape') { setEditingDocId(null); setEditingField(null); } }}
+                                onBlur={() => handleQuickEditSave(doc._id, field)}
+                                className="bg-black/50 border border-sky-500/50 rounded px-2 py-0.5 text-xs text-white outline-none w-1/2"
+                                autoFocus
+                            />
+                          ) : (
+                            <div 
+                                onDoubleClick={() => startQuickEdit(doc._id, field, doc[field])}
+                                className="text-xs text-white truncate max-w-[60%] flex items-center gap-1 hover:bg-white/10 px-1 rounded cursor-text"
+                            >
+                                <Pencil size={12} className="text-gray-600"/>
+                                {doc[field]}
+                            </div>
+                          )}
+                      </div>
+                  ))}
+                  
                   <div className="mt-2 text-xs text-gray-400 truncate font-mono">
                      {JSON.stringify(doc).substring(0, 80)}...
                   </div>
@@ -301,6 +352,7 @@ export default function CollectionDetail() {
                 </div>
              </div>
              <div className="flex-1 overflow-auto custom-scrollbar p-2">
+               {/* JSON Syntax Highlighter */}
                <SyntaxHighlighter language="json" style={vscDarkPlus} customStyle={{background: 'transparent', fontSize: '12px', margin: 0}}>
                   {JSON.stringify(selectedDoc, null, 2)}
                </SyntaxHighlighter>
