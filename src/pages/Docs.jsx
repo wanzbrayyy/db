@@ -22,7 +22,9 @@ export default function Docs() {
 
   // KOMPONEN CODE BLOCK
   const CodeBlock = ({ language, children }) => {
-    const highlightedCode = getHighlightedCode(children);
+    // Menghapus Template Literal pembungkus agar kontennya bersih saat diwarnai
+    const codeContent = children.trim().startsWith('`') ? children.trim().slice(1, -1) : children;
+    const highlightedCode = getHighlightedCode(codeContent);
     return (
       <div className="bg-[#050505] rounded-lg border border-white/10 p-4 overflow-x-auto my-4">
         <pre className="font-mono text-sm" style={{color: '#abb2bf', whiteSpace: 'pre-wrap'}}>
@@ -88,7 +90,7 @@ export default function Docs() {
         </h3>
         <p className="text-gray-400 mb-4">WanzDB dirilis sebagai NPM package ringan. Gunakan manajer paket favorit Anda:</p>
         <CodeBlock language="bash">
-          npm install wanzdb
+          {`npm install wanzdb`}
         </CodeBlock>
 
         <h3 id="authentication" className="text-2xl font-bold text-white mt-8 mb-4 flex items-center gap-2">
@@ -96,13 +98,12 @@ export default function Docs() {
         </h3>
         <p className="text-gray-400 mb-4">Autentikasi menggunakan Connection String standar, di mana **Password** Anda adalah **Unique User ID (UUID)** yang berfungsi sebagai **API Key** rahasia. Ini menghilangkan kebutuhan untuk mengirim password asli (bcrypt hash) melalui API, meningkatkan keamanan.</p>
         <CodeBlock language="javascript">
-          {/* SINTAKS DI BAWAH SUDAH DIPERBAIKI */}
-          const {'{ Client }'} = require('wanzdb');
+          {`const { Client } = require('wanzdb');
 
           // Format: wanzdb://<USERNAME>:<UUID_KEY>@dbw-nu.vercel.app
           const db = new Client("wanzdb://<USERNAME>:<UUID_KEY>@dbw-nu.vercel.app");
           
-          await db.connect();
+          await db.connect();`}
         </CodeBlock>
 
 
@@ -114,7 +115,7 @@ export default function Docs() {
         
         <h3 id="basic-crud-operations" className="text-2xl font-bold text-white mt-8 mb-4">Basic CRUD Operations</h3>
         <CodeBlock language="javascript">
-          const users = client.collection('users');
+          {`const users = client.collection('users');
           
           // INSERT: Auto generates 50-char ID
           const newUser = await users.insert({ email: "ali@wanz.dev" });
@@ -123,27 +124,27 @@ export default function Docs() {
           const allUsers = await users.find({});
           
           // UPDATE: Update by ID
-          const updated = await users.update(newUser._id, { status: "active" });
+          const updated = await users.update(newUser._id, { status: "active" });`}
         </CodeBlock>
         
         <h3 id="trash-bin-restore" className="text-2xl font-bold text-white mt-8 mb-4">Trash Bin & Restore</h3>
         <p className="text-gray-400 mb-4">Operasi delete adalah **Soft Delete** secara default. Dokumen dipindahkan ke Trash Bin dan dapat dipulihkan hingga Anda melakukan *Empty Trash* permanen.</p>
         <CodeBlock language="javascript">
-          // SOFT DELETE: Pindah ke Trash Bin
+          {`// SOFT DELETE: Pindah ke Trash Bin
           await users.delete(userId);
           
           // RESTORE: Mengembalikan dokumen dari Trash
-          await client.trash.restore('users', userId);
+          await client.trash.restore('users', userId);`}
         </CodeBlock>
 
         <h3 id="advanced-filtering-sorting" className="text-2xl font-bold text-white mt-8 mb-4">Advanced Filtering & Sorting</h3>
         <p className="text-gray-400 mb-4">WanzDB mendukung operator query lanjutan melalui parameter objek. Anda bisa melakukan sorting (sertakan `-` untuk DESC) dan filtering logis.</p>
         <CodeBlock language="javascript">
-          const users = client.collection('users');
+          {`const users = client.collection('users');
           const seniorUsers = await users.find({
             age: { gt: 20 }, // gt: greater than
             role: "admin"
-          }, { sort: "-age", limit: 10 });
+          }, { sort: "-age", limit: 10 });`}
         </CodeBlock>
 
 
@@ -165,9 +166,9 @@ export default function Docs() {
         <h3 id="javascript-sdk" className="text-2xl font-bold text-white mt-8 mb-4">JavaScript SDK</h3>
         <p className="text-gray-400 mb-4">SDK kami dirancang untuk kompatibilitas penuh dengan lingkungan Node.js dan browser. Semua method mengembalikan Promise. Anda dapat menggunakan sintaks async/await yang modern.</p>
         <CodeBlock language="javascript">
-          const {'{ Client }'} = require('wanzdb');
+          {`const { Client } = require('wanzdb');
 
-          async function getUser() {'{'}
+          async function getUser() {
             const client = new Client("wanzdb://user:key@host");
             await client.connect();
             
@@ -175,17 +176,17 @@ export default function Docs() {
             const doc = await users.findOne({ email: "test@example.com" });
 
             return doc;
-          {'}'}
+          }`}
         </CodeBlock>
 
         <h3 id="error-handling" className="text-2xl font-bold text-white mt-8 mb-4">Error Handling</h3>
         <p className="text-gray-400 mb-4">Semua method SDK mengembalikan Promise. Anda harus menggunakan blok try...catch untuk menangani kegagalan jaringan, validasi, atau otentikasi.</p>
         <CodeBlock language="javascript">
-          try {'{'}
+          {`try {
             await client.collection('protected').insert({ data: true });
-          {'}'} catch (error) {'{'}
-            console.error(`Error Code: ${error.message}`);
-          {'}'}
+          } catch (error) {
+            console.error(\`Error Code: \${error.message}\`);
+          }`}
         </CodeBlock>
       </main>
     </div>
