@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Terminal, Globe, Zap, ShieldCheck, Database, LayoutGrid, Cpu } from 'lucide-react';
+import { ArrowRight, Terminal, Globe, Zap, ShieldCheck, LayoutGrid, Cpu } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { generateNanoId } from '../utils/uuid';
 import { motion } from 'framer-motion';
@@ -48,7 +48,7 @@ export default function Landing() {
           </motion.h1>
           
           <motion.p variants={itemVariants} className="text-lg md:text-xl text-textMuted leading-relaxed max-w-3xl mx-auto mb-12">
-            **WanzDB** is engineered from the ground up for zero-latency, high-availability data storage. We provide a robust, familiar Document API that lets you focus exclusively on building features, not managing complex Kubernetes clusters or sharding configurations. Deploy your schema instantly and scale to millions of requests without friction.
+            **WANZDB** is engineered from the ground up for zero-latency, high-availability data storage. We provide a robust, familiar Document API that lets you focus exclusively on building features, not managing complex Kubernetes clusters or sharding configurations. Deploy your schema instantly and scale to millions of requests without friction.
           </motion.p>
 
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -70,7 +70,7 @@ export default function Landing() {
             <div className="rounded-xl bg-[#0a0a0a] border border-white/10 shadow-2xl overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-white/[0.02]">
                 <div className="flex gap-2"><div className="w-3 h-3 rounded-full bg-red-500/20"></div><div className="w-3 h-3 rounded-full bg-yellow-500/20"></div><div className="w-3 h-3 rounded-full bg-green-500/20"></div></div>
-                <div className="mx-auto text-xs text-textMuted font-mono">wanzdb-client.js</div>
+                <div className="mx-auto text-xs text-textMuted font-mono">wanzdb</div>
               </div>
               <div className="p-6 md:p-8 text-left font-mono text-sm overflow-x-auto">
                  <pre>

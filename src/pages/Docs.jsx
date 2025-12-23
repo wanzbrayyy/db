@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Book, ChevronRight, Code, Terminal, Server, Key, Shield, HardHat, FileText } from 'lucide-react';
+import { Book, ChevronRight, Code, Terminal, Server, Key, Shield, HardHat, FileText, Database, Code2 } from 'lucide-react';
 import Card from '../components/ui/Card';
 
 export default function Docs() {
@@ -58,20 +58,20 @@ export default function Docs() {
       <main className="flex-1 py-8 min-w-0">
         
         <div className="mb-12 border-b border-white/10 pb-10">
-          <h1 className="text-4xl font-bold text-white mb-4">WanzDB Documentation</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">WANZDB Documentation</h1>
           <p className="text-xl text-gray-400">The comprehensive guide to integrating WanzDB into your Node.js, Python, or PHP applications.</p>
         </div>
 
         {/* ======================= SECTION 1: GETTING STARTED ======================= */}
         <SectionTitle id="introduction" icon={Book}>Getting Started</SectionTitle>
         <p className="text-gray-400 mb-6 leading-relaxed">
-          WanzDB adalah database JSON serverless yang dirancang untuk kecepatan tinggi dan skalabilitas instan. Berbeda dengan database tradisional, WanzDB mengurus semua konfigurasi jaringan, sharding, dan failover, memungkinkan Anda berfokus penuh pada logika bisnis aplikasi Anda. Arsitektur kami yang **Global-First** menjamin latensi yang minim untuk pengguna di seluruh dunia.
+          WANZDB adalah database JSON serverless yang dirancang untuk kecepatan tinggi dan skalabilitas instan. Berbeda dengan database tradisional, WanzDB mengurus semua konfigurasi jaringan, sharding, dan failover, memungkinkan Anda berfokus penuh pada logika bisnis aplikasi Anda. Arsitektur kami yang **Global-First** menjamin latensi yang minim untuk pengguna di seluruh dunia.
         </p>
 
         <h3 id="installation" className="text-2xl font-bold text-white mt-8 mb-4 flex items-center gap-2">
             <Terminal className="text-gray-500" size={20} /> Installation
         </h3>
-        <p className="text-gray-400 mb-4">WanzDB dirilis sebagai NPM package ringan. Gunakan manajer paket favorit Anda:</p>
+        <p className="text-gray-400 mb-4">WANZDB dirilis sebagai NPM package ringan. Gunakan manajer paket favorit Anda:</p>
         <CodeBlock language="bash">
           npm install wanzdb
         </CodeBlock>
@@ -101,13 +101,13 @@ export default function Docs() {
           <span className="text-purple-400">const</span> users = client.<span className="text-blue-400">collection</span>(<span className="text-green-400">'users'</span>);
           
           <span className="text-gray-500">// INSERT: Auto generates 50-char ID</span>
-          <span className="text-purple-400">const</span> newUser = <span className="text-purple-400">await</span> users.<span className="text-blue-400">insert</span>({'{} email: "ali@wanz.dev" {}'});
+          <span className="text-purple-400">const</span> newUser = <span className="text-purple-400">await</span> users.<span className="text-blue-400">insert</span>({'{'} email: "ali@wanz.dev" {'}'});
           
           <span className="text-gray-500">// FIND: Ambil semua</span>
-          <span className="text-purple-400">const</span> allUsers = <span className="text-purple-400">await</span> users.<span className="text-blue-400">find</span>({'{}');
+          <span className="text-purple-400">const</span> allUsers = <span className="text-purple-400">await</span> users.<span className="text-blue-400">find</span>({});
           
           <span className="text-gray-500">// UPDATE: Update by ID</span>
-          <span className="text-purple-400">await</span> users.<span className="text-blue-400">update</span>(newUser._id, {'{} status: "active" {}'});
+          <span className="text-purple-400">await</span> users.<span className="text-blue-400">update</span>(newUser._id, {'{'} status: "active" {'}'});
         </CodeBlock>
         
         <h3 id="trash-bin-restore" className="text-2xl font-bold text-white mt-8 mb-4">Trash Bin & Restore</h3>
@@ -120,6 +120,17 @@ export default function Docs() {
           <span className="text-purple-400">await</span> client.trash.<span className="text-blue-400">restore</span>('users', userId);
         </CodeBlock>
 
+        <h3 id="advanced-filtering-sorting" className="text-2xl font-bold text-white mt-8 mb-4">Advanced Filtering & Sorting</h3>
+        <p className="text-gray-400 mb-4">WANZDB mendukung operator query lanjutan melalui parameter objek. Anda bisa melakukan sorting (`-` untuk DESC) dan filtering logis.</p>
+        <CodeBlock language="javascript">
+          <span className="text-purple-400">const</span> users = client.collection(<span className="text-green-400">'users'</span>);
+          <span className="text-purple-400">const</span> seniorUsers = <span className="text-purple-400">await</span> users.<span className="text-blue-400">find</span>({'{'}
+            age: {'{'} <span className="text-yellow-200">gt</span>: 20 {'}'},
+            role: <span className="text-green-400">"admin"</span>
+          {'}'}, {'{'} sort: <span className="text-green-400">"name"</span>, limit: 10 {'}'});
+        </CodeBlock>
+
+
         {/* ======================= SECTION 3: DEVELOPER TOOLS ======================= */}
         <SectionTitle id="developer-tools" icon={HardHat}>Developer Tools</SectionTitle>
 
@@ -128,9 +139,38 @@ export default function Docs() {
 
         <h3 id="webhooks-integration" className="text-2xl font-bold text-white mt-8 mb-4">Webhooks Integration</h3>
         <p className="text-gray-400 mb-6">Daftarkan URL Webhook di Dashboard untuk menerima notifikasi *real-time* saat terjadi event seperti `document.created` atau `document.updated`. Fitur ini sangat penting untuk membangun arsitektur *event-driven* atau sinkronisasi data antar layanan mikro (microservices).</p>
-        
 
-        {/* ... Lanjutkan dengan section lain seperti SDK Reference ... */}
+        <h3 id="playground-aggregation" className="text-2xl font-bold text-white mt-8 mb-4">Playground & Aggregation</h3>
+        <p className="text-gray-400 mb-6">Gunakan Playground Console untuk menguji query dan aggregation pipeline secara langsung. Ini mendukung sintaks MongoDB MQL penuh untuk operasi data yang kompleks dan visualisasi data sebelum diimplementasikan di kode Anda.</p>
+
+        {/* ======================= SECTION 4: SDK REFERENCE ======================= */}
+        <SectionTitle id="sdk-reference" icon={Code2}>SDK Reference</SectionTitle>
+
+        <h3 id="javascript-sdk" className="text-2xl font-bold text-white mt-8 mb-4">JavaScript SDK</h3>
+        <p className="text-gray-400 mb-4">SDK kami dirancang untuk kompatibilitas penuh dengan lingkungan Node.js dan browser. Semua method mengembalikan Promise, sehingga Anda dapat menggunakan sintaks `async/await` yang modern.</p>
+        <CodeBlock language="javascript">
+          <span className="text-purple-400">const</span> {'{ Client }'} = require(<span className="text-green-400">'wanzdb'</span>);
+
+          <span className="text-purple-400">async function</span> getUser() {'{'}
+            <span className="text-purple-400">const</span> client = <span className="text-purple-400">new</span> Client(<span className="text-yellow-400">"wanzdb://user:key@host"</span>);
+            <span className="text-purple-400">await</span> client.<span className="text-blue-400">connect</span>();
+            
+            <span className="text-purple-400">const</span> users = client.collection(<span className="text-green-400">'users'</span>);
+            <span className="text-purple-400">const</span> doc = <span className="text-purple-400">await</span> users.<span className="text-blue-400">findOne</span>({'{'} email: <span className="text-green-400">"test@example.com"</span> {'}'});
+
+            <span className="text-purple-400">return</span> doc;
+          {'}'}
+        </CodeBlock>
+
+        <h3 id="error-handling" className="text-2xl font-bold text-white mt-8 mb-4">Error Handling</h3>
+        <p className="text-gray-400 mb-4">Semua method SDK mengembalikan Promise. Anda harus menggunakan blok `try...catch` untuk menangani kegagalan jaringan, validasi, atau otentikasi.</p>
+        <CodeBlock language="javascript">
+          <span className="text-purple-400">try</span> {'{'}
+            <span className="text-purple-400">await</span> client.collection(<span className="text-green-400">'protected'</span>).<span className="text-blue-400">insert</span>({'{} data: true {'}'});
+          {'}'} <span className="text-purple-400">catch</span> (error) {'{'}
+            <span className="text-purple-400">console</span>.<span className="text-blue-400">error</span>(<span className="text-green-400">`Error Code: ${error.message}`</span>);
+          {'}'}
+        </CodeBlock>
       </main>
     </div>
   );
