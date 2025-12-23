@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './hooks/useToast';
-import RestAPI from './pages/dashboard/RestAPI'; 
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -27,6 +26,7 @@ import Playground from './pages/dashboard/Playground';
 import Developer from './pages/dashboard/Developer';
 import Trash from './pages/dashboard/Trash';
 import Upgrade from './pages/dashboard/Upgrade';
+import RestAPI from './pages/dashboard/RestAPI'; // Import Halaman REST API
 
 function App() {
   return (
@@ -60,7 +60,7 @@ function App() {
                 {/* Developer Tools */}
                 <Route path="developer" element={<Developer />} />
                 <Route path="playground" element={<Playground />} />
-                                <Route path="rest-api" element={<RestAPI />} /> {/* ROUTE BARU */}
+                <Route path="rest-api" element={<RestAPI />} /> {/* Route REST API */}
                 
                 {/* Upgrade */}
                 <Route path="upgrade" element={<Upgrade />} />
