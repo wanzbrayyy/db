@@ -27,7 +27,7 @@ import Developer from './pages/dashboard/Developer';
 import Trash from './pages/dashboard/Trash';
 import Upgrade from './pages/dashboard/Upgrade';
 import RestAPI from './pages/dashboard/RestAPI'; 
-import RestAPIDetail from './pages/dashboard/RestAPIDetail'; // Import Halaman Baru
+
 function App() {
   return (
     <ThemeProvider>
@@ -63,8 +63,7 @@ function App() {
                 
                 {/* 🔥 PERBAIKAN: Gunakan '*' untuk menangkap seluruh nama model, termasuk '/' dan ':' */}
                 <Route path="rest-api/:modelName/*" element={<RestAPI />} /> 
-<Route path="rest-api" element={<RestAPI />} /> 
-                <Route path="rest-api/:modelName/*" element={<RestAPIDetail />} /> 
+                <Route path="rest-api" element={<RestAPI />} /> 
                 
                 {/* Upgrade */}
                 <Route path="upgrade" element={<Upgrade />} />
