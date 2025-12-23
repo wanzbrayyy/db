@@ -22,7 +22,7 @@ export default function RestAPI() {
     useEffect(() => {
         const fetchModels = async () => {
             try {
-                // Hanya admin yang bisa melihat daftar penuh (seperti di Developer.jsx)
+                // Hanya admin yang bisa melihat daftar penuh
                 const res = await fetch(`${API_URL_ADMIN}/ai-models`, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
                 });
@@ -38,10 +38,14 @@ export default function RestAPI() {
         fetchModels();
     }, []);
 
+    const handleCopy = (text) => {
+        navigator.clipboard.writeText(text);
+        // ... (feedback logic) ...
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in">
-            {/* Header dan Toggle (Sama) */}
+            {/* Header dan Toggle */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4">
                 <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                     <Code size={24} className="text-sky-400" /> REST API Katalog
@@ -66,13 +70,13 @@ export default function RestAPI() {
                     <p className="text-gray-500">Memuat daftar model...</p>
                 ) : models.length > 0 ? (
                     models.map(model => (
-                        // Card Model AI Responsif
                         <Card key={model._id} className="p-4 bg-surface/30 border-white/10 flex flex-col sm:flex-row sm:items-center justify-between group hover:border-sky-500/30 transition-all">
                             <div className="min-w-0 flex-1 mb-3 sm:mb-0">
                                 <h3 className="text-lg font-bold text-sky-400 truncate" title={model.modelName}>{model.modelName}</h3>
                                 <p className="text-xs text-gray-400 truncate">Versi: {model.version} | Context: {model.context}K</p>
                             </div>
-                            <Link to={`/dashboard/rest-api/${model.modelName}`}>
+                            {/* 🔥 PERBAIKAN LINK: Encode URL untuk keamanan dan routing */}
+                            <Link to={`/dashboard/rest-api/${encodeURIComponent(model.modelName)}`}>
                                 <Button size="sm" variant="secondary" className="bg-white/5 hover:bg-white/10 w-full sm:w-auto">Lihat Docs</Button>
                             </Link>
                         </Card>

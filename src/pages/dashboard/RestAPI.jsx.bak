@@ -3,7 +3,7 @@ import { Globe, Code, Zap, Check, Key, Code2, Copy, Terminal, ToggleLeft, Toggle
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import CodeBlock from '../../components/ui/CodeBlock';
-import { useState, useEffect } from 'react'; // 🔥 PERBAIKAN: Import dari 'react', bukan 'react-router-dom'
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 // URL Endpoint (untuk mengambil daftar model)
@@ -30,7 +30,6 @@ export default function RestAPI() {
                 if (!res.ok) throw new Error(data.msg || 'Failed to fetch models');
                 setModels(data);
             } catch (e) {
-                // Jika user biasa, biarkan models kosong, tapi tampilkan default API
                 console.error("Not Admin or failed to load models:", e);
             } finally {
                 setLoading(false);
@@ -39,10 +38,6 @@ export default function RestAPI() {
         fetchModels();
     }, []);
 
-    const handleCopy = (text) => {
-        navigator.clipboard.writeText(text);
-        // ... (feedback logic) ...
-    };
 
     return (
         <div className="space-y-8 animate-in fade-in">
@@ -71,13 +66,14 @@ export default function RestAPI() {
                     <p className="text-gray-500">Memuat daftar model...</p>
                 ) : models.length > 0 ? (
                     models.map(model => (
-                        <Card key={model._id} className="p-4 bg-surface/30 border-white/10 flex justify-between items-center group hover:border-sky-500/30 transition-all">
-                            <div>
-                                <h3 className="text-lg font-bold text-sky-400">{model.modelName}</h3>
-                                <p className="text-xs text-gray-400">Versi: {model.version} | Context: {model.context}K</p>
+                        // Card Model AI Responsif
+                        <Card key={model._id} className="p-4 bg-surface/30 border-white/10 flex flex-col sm:flex-row sm:items-center justify-between group hover:border-sky-500/30 transition-all">
+                            <div className="min-w-0 flex-1 mb-3 sm:mb-0">
+                                <h3 className="text-lg font-bold text-sky-400 truncate" title={model.modelName}>{model.modelName}</h3>
+                                <p className="text-xs text-gray-400 truncate">Versi: {model.version} | Context: {model.context}K</p>
                             </div>
                             <Link to={`/dashboard/rest-api/${model.modelName}`}>
-                                <Button size="sm" variant="secondary" className="bg-white/5 hover:bg-white/10">Lihat Docs</Button>
+                                <Button size="sm" variant="secondary" className="bg-white/5 hover:bg-white/10 w-full sm:w-auto">Lihat Docs</Button>
                             </Link>
                         </Card>
                     ))

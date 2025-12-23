@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Key, Code, Zap, Copy, Check, Terminal, Play, Cpu, ChevronLeft, Info, Server, Code2, Database } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -32,7 +32,7 @@ const ResponseSchema = ({ status, description, color, bodySchema }) => (
 
 // Helper: Menampilkan Blok Endpoint
 const EndpointDetail = ({ method, path, title, description, responses }) => {
-    const methodColor = method === 'POST' ? 'text-green-400' : method === 'GET' ? 'text-sky-400' : 'text-red-440';
+    const methodColor = method === 'POST' ? 'text-green-400' : method === 'GET' ? 'text-sky-400' : 'text-red-400';
     const methodBg = method === 'POST' ? 'bg-green-500/10' : method === 'GET' ? 'bg-sky-500/10' : 'bg-red-500/10';
 
     return (
@@ -58,13 +58,8 @@ const EndpointDetail = ({ method, path, title, description, responses }) => {
 
 
 export default function RestAPIDetail() {
+    const { modelName } = useParams();
     const { showToast } = useToast();
-    const location = useLocation(); 
-    
-    // 🔥 PERBAIKAN: Ambil dan decode sisa path
-    const pathSegment = location.pathname.split('/dashboard/rest-api/')[1];
-    const modelName = pathSegment ? decodeURIComponent(pathSegment) : null; 
-    
     const [modelData, setModelData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [prompt, setPrompt] = useState("jelaskan fungsi dari rest api dalam 50 kata.");
@@ -76,8 +71,7 @@ export default function RestAPIDetail() {
         const fetchModelDocs = async () => {
             if (!modelName) { setLoading(false); return; }
             try {
-                // Panggil endpoint di backend (menggunakan modelName yang sudah di-decode)
-                const res = await fetch(`${API_URL_DEV}/public/ai-model/${modelName}`);
+                const res = await fetch(`${API_URL_DEV}/public/ai-model/${modelName.replace('/*', '')}`);
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.msg || "Model not found");
                 setModelData(data);
@@ -95,8 +89,10 @@ export default function RestAPIDetail() {
     const handleTestApi = async () => {
         setIsRunning(true);
         setOutput("Running...");
+        // Simulasikan delay
         await new Promise(resolve => setTimeout(resolve, 1500));
         
+        // Simulasikan response dari AI
         setOutput("fungsi utama rest api adalah memungkinkan komunikasi antar sistem. ia menggunakan metode http standar (get, post, put, delete) untuk mengakses dan memanipulasi data. ini sangat penting untuk aplikasi web modern dan layanan mikro. (simulasi)");
         setIsRunning(false);
         showToast("Test API Selesai!", 'success');
@@ -112,6 +108,7 @@ export default function RestAPIDetail() {
     "temperature": 0.7,
     "max_tokens": 100
 }'`;
+
 
     // Data Swagger untuk Model AI
     const aiResponses = [

@@ -27,7 +27,8 @@ import Developer from './pages/dashboard/Developer';
 import Trash from './pages/dashboard/Trash';
 import Upgrade from './pages/dashboard/Upgrade';
 import RestAPI from './pages/dashboard/RestAPI'; 
-import RestAPIDetail from './pages/dashboard/RestAPIDetail'; // Import Halaman Baru
+import RestAPIDetail from './pages/dashboard/RestAPIDetail'; // Import Halaman Detail
+
 function App() {
   return (
     <ThemeProvider>
@@ -61,9 +62,8 @@ function App() {
                 <Route path="developer" element={<Developer />} />
                 <Route path="playground" element={<Playground />} />
                 
-                {/* 🔥 PERBAIKAN: Gunakan '*' untuk menangkap seluruh nama model, termasuk '/' dan ':' */}
-                <Route path="rest-api/:modelName/*" element={<RestAPI />} /> 
-<Route path="rest-api" element={<RestAPI />} /> 
+                {/* 🔥 PERBAIKAN ROUTING FINAL: Menggunakan Path Splitting */}
+                <Route path="rest-api" element={<RestAPI />} /> 
                 <Route path="rest-api/:modelName/*" element={<RestAPIDetail />} /> 
                 
                 {/* Upgrade */}
